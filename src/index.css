@@ -1,0 +1,393 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   GLOBAL RESETS & BASE
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  background-color: #0A0A0A;
+  color: #F5F5F5;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom cursor — hide default when JS is active */
+body.custom-cursor-active {
+  cursor: none;
+}
+body.custom-cursor-active a,
+body.custom-cursor-active button {
+  cursor: none;
+}
+
+/* ============================================
+   SELECTION
+   ============================================ */
+::selection {
+  background: rgba(29, 191, 115, 0.25);
+  color: #F5F5F5;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ============================================
+   TYPOGRAPHY UTILITIES
+   ============================================ */
+.font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #F5F5F5 0%, #A1A1A1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-accent-gradient {
+  background: linear-gradient(135deg, #1DBF73 0%, #0f9555 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   GRAIN NOISE TEXTURE
+   ============================================ */
+.grain-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+  animation: grain 0.5s steps(2) infinite;
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, -3%); }
+  20% { transform: translate(3%, 1%); }
+  30% { transform: translate(-1%, 4%); }
+  40% { transform: translate(4%, -2%); }
+  50% { transform: translate(-3%, 3%); }
+  60% { transform: translate(2%, -4%); }
+  70% { transform: translate(-4%, 1%); }
+  80% { transform: translate(3%, 3%); }
+  90% { transform: translate(-2%, -1%); }
+}
+
+/* ============================================
+   SECTION SPACING
+   ============================================ */
+.section-padding {
+  padding-top: 8rem;
+  padding-bottom: 8rem;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+
+/* ============================================
+   LINKS
+   ============================================ */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ============================================
+   FOCUS VISIBLE (Accessibility)
+   ============================================ */
+:focus-visible {
+  outline: 2px solid #1DBF73;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .grain-overlay {
+    animation: none;
+  }
+}
+
+/* ============================================
+   HORIZONTAL SCROLL CONTAINER
+   ============================================ */
+.scroll-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   LINE CLAMP
+   ============================================ */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================
+   MOBILE MENU OVERLAY
+   ============================================ */
+.mobile-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #0A0A0A;
+}
+
+/* ============================================
+   PROJECT CARD IMAGE SCALE
+   ============================================ */
+.project-card-image {
+  transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+.project-card:hover .project-card-image {
+  transform: scale(1.04);
+}
+
+/* ============================================
+   MARQUEE (Tools Ticker)
+   ============================================ */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee 25s linear infinite;
+  will-change: transform;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ============================================
+   PHILOSOPHY SECTION
+   ============================================ */
+.philosophy-line {
+  overflow: hidden;
+}
+
+/* ============================================
+   HERO — hand-drawn underline on "I do both."
+   ============================================ */
+.hero-both-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.hero-underline {
+  position: absolute;
+  bottom: -0.35em;
+  left: 0;
+  width: 100%;
+  height: 0.6em;
+  overflow: visible;
+  pointer-events: none;
+}
+
+
+/* ============================================
+   LOADING SCREEN
+   ============================================ */
+.loader-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: #0A0A0A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.loader-curtain {
+  position: absolute;
+  inset: 0;
+  background-color: #1DBF73;
+  z-index: 1;
+  transform-origin: top;
+}
+
+.loader-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+
+/* Name */
+.loader-name {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.04em;
+}
+
+.loader-char-wrapper {
+  overflow: hidden;
+  display: inline-block;
+  line-height: 1;
+}
+
+.loader-char {
+  display: inline-block;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(4rem, 12vw, 9rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #F5F5F5;
+  line-height: 1;
+}
+
+/* Green accent dot after name */
+.loader-name::after {
+  content: '.';
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(4rem, 12vw, 9rem);
+  font-weight: 700;
+  color: #1DBF73;
+  line-height: 1;
+  margin-left: 0.04em;
+}
+
+/* Tagline */
+.loader-tagline-wrapper {
+  overflow: hidden;
+}
+
+.loader-tagline {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: clamp(0.7rem, 1.5vw, 0.875rem);
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #A1A1A1;
+}
+
+/* Footer bar */
+.loader-footer {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 2.5rem;
+  right: 2.5rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.loader-counter {
+  font-family: 'Inter', monospace, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #F5F5F5;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  min-width: 2.8rem;
+}
+
+.loader-counter-pct {
+  color: #1DBF73;
+}
+
+.loader-bar-track {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.loader-bar-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #1DBF73, #0f9555);
+  transform-origin: left;
+  border-radius: 1px;
+}
+
+.loader-label {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #555;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .loader-footer {
+    bottom: 1.75rem;
+    left: 1.5rem;
+    right: 1.5rem;
+  }
+}
