@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { motion, useInView, useScroll, useSpring, useTransform, AnimatePresence } from 'framer-motion'
 import { projects } from '../data/projects'
 import type { Project } from '../data/projects'
 
@@ -12,14 +12,14 @@ interface ProjectCardProps {
 function ProjectCard({ project, index, onClick }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-10% 0px' })
+  const isInView = useInView(ref, { once: true, margin: '-8% 0px' })
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 60 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, y: 50, clipPath: 'inset(0 0 100% 0)' }}
+      animate={isInView ? { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)' } : {}}
+      transition={{ duration: 0.85, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
       className="project-card group border-t border-[rgba(255,255,255,0.08)] pt-6 pb-8 cursor-pointer"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -138,14 +138,21 @@ interface SelectedWorkProps {
 }
 
 export default function SelectedWork({ onProjectClick }: SelectedWorkProps) {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-10% 0px' })
+  const headerRef = useRef<HTMLDivElement>(null)
+  const isInView = useInView(headerRef, { once: true, margin: '-10% 0px' })
+
+  const { scrollYProgress } = useScroll({
+    target: headerRef,
+    offset: ['start end', 'end start'],
+  })
+  const sp = { stiffness: 55, damping: 20, mass: 0.6 }
+  const titleY = useSpring(useTransform(scrollYProgress, [0, 1], [30, -50]), sp)
 
   return (
     <section id="work" className="py-24 md:py-40 bg-[#0A0A0A]" aria-label="Selected work">
       <div className="max-w-[1400px] mx-auto px-6 md:px-10">
         {/* Header */}
-        <div ref={ref} className="flex flex-col md:flex-row md:items-end justify-between mb-16 md:mb-20 gap-6">
+        <div ref={headerRef} className="flex flex-col md:flex-row md:items-end justify-between mb-16 md:mb-20 gap-6">
           <div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -162,6 +169,7 @@ export default function SelectedWork({ onProjectClick }: SelectedWorkProps) {
             <div className="overflow-hidden">
               <motion.h2
                 className="font-display text-[clamp(2.5rem,6vw,5.5rem)] font-bold text-[#F5F5F5] leading-[1.0] tracking-[-0.02em]"
+                style={{ y: titleY }}
                 initial={{ y: '100%' }}
                 animate={isInView ? { y: '0%' } : {}}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}

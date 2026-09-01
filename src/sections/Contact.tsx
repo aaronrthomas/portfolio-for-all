@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 
 const socialLinks = [
   {
@@ -22,6 +22,14 @@ const socialLinks = [
 export default function Contact() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-10% 0px' })
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
+  const sp = { stiffness: 55, damping: 20, mass: 0.6 }
+  const headingY = useSpring(useTransform(scrollYProgress, [0, 1], [50, -50]), sp)
+  const ctaY     = useSpring(useTransform(scrollYProgress, [0, 1], [30, -30]), sp)
 
   return (
     <section
@@ -53,6 +61,7 @@ export default function Contact() {
           <div className="overflow-hidden mb-2">
             <motion.h2
               className="font-display text-[clamp(2.5rem,7vw,7rem)] font-bold text-[#F5F5F5] leading-[1.0] tracking-[-0.02em]"
+              style={{ y: headingY }}
               initial={{ y: '100%' }}
               animate={isInView ? { y: '0%' } : {}}
               transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
@@ -63,6 +72,7 @@ export default function Contact() {
           <div className="overflow-hidden mb-8">
             <motion.h2
               className="font-display text-[clamp(2.5rem,7vw,7rem)] font-bold italic font-medium text-[#A1A1A1] leading-[1.0] tracking-[-0.02em]"
+              style={{ y: headingY }}
               initial={{ y: '100%' }}
               animate={isInView ? { y: '0%' } : {}}
               transition={{ duration: 0.9, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
@@ -83,6 +93,7 @@ export default function Contact() {
           {/* Primary CTA */}
           <motion.div
             className="flex flex-col sm:flex-row gap-4 mb-16"
+            style={{ y: ctaY }}
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -157,3 +168,4 @@ export default function Contact() {
     </section>
   )
 }
+

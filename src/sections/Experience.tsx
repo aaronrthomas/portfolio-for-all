@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 import { experience } from '../data/experience'
 
 const typeStyles: Record<string, string> = {
@@ -19,6 +19,13 @@ const typeLabels: Record<string, string> = {
 export default function Experience() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-10% 0px' })
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
+  const sp = { stiffness: 55, damping: 20, mass: 0.6 }
+  const timelineY = useSpring(useTransform(scrollYProgress, [0, 1], [60, -60]), sp)
 
   return (
     <section
@@ -68,13 +75,13 @@ export default function Experience() {
           </div>
 
           {/* Right: Timeline */}
-          <div className="flex flex-col gap-0">
+          <motion.div className="flex flex-col gap-0" style={{ y: timelineY }}>
             {experience.map((item, i) => (
               <motion.div
                 key={item.id}
                 className="relative pl-8 pb-12 border-l border-[rgba(255,255,255,0.08)] last:border-l-transparent group"
-                initial={{ opacity: 0, x: 30 }}
-                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                initial={{ opacity: 0, x: 40, scale: 0.97 }}
+                animate={isInView ? { opacity: 1, x: 0, scale: 1 } : {}}
                 transition={{ delay: 0.2 + i * 0.15, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               >
                 {/* Timeline dot */}
@@ -130,9 +137,10 @@ export default function Experience() {
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
   )
 }
+

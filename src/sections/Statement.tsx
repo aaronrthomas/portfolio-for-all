@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { motion, useInView, useScroll, useTransform } from 'framer-motion'
+import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 
 export default function Statement() {
   const ref = useRef<HTMLElement>(null)
@@ -9,8 +9,9 @@ export default function Statement() {
     target: ref,
     offset: ['start end', 'end start'],
   })
-
-  const y = useTransform(scrollYProgress, [0, 1], [40, -40])
+  const sp = { stiffness: 55, damping: 20, mass: 0.6 }
+  const sectionY  = useSpring(useTransform(scrollYProgress, [0, 1], [60, -60]), sp)
+  const accentX   = useSpring(useTransform(scrollYProgress, [0, 1], [-20, 20]), sp)
 
   return (
     <section
@@ -18,11 +19,18 @@ export default function Statement() {
       className="relative py-24 md:py-40 overflow-hidden bg-[#0A0A0A]"
       aria-label="Statement section"
     >
-
-
+      {/* Drifting accent orb */}
+      <motion.div
+        className="absolute right-[-10%] top-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{
+          x: accentX,
+          background: 'radial-gradient(circle, rgba(29,191,115,0.05) 0%, transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-10">
-        {/* Eyebrow — more human annotation style */}
+        {/* Eyebrow */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -32,43 +40,29 @@ export default function Statement() {
           <span className="font-sans text-[#555] text-sm">an honest opinion —</span>
         </motion.div>
 
-        {/* Large statement — one real opinion, not an intersection */}
-        <motion.div style={{ y }}>
-          <div className="overflow-hidden">
-            <motion.p
-              className="font-display text-[clamp(2.4rem,6.5vw,6rem)] font-bold leading-[1.1] tracking-[-0.02em] text-[#F5F5F5]"
-              initial={{ y: '110%' }}
-              animate={isInView ? { y: '0%' } : { y: '110%' }}
-              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            >
-              Most digital products
-            </motion.p>
-          </div>
-          <div className="overflow-hidden">
-            <motion.p
-              className="font-display text-[clamp(2.4rem,6.5vw,6rem)] font-bold leading-[1.1] tracking-[-0.02em] text-[#F5F5F5]"
-              initial={{ y: '110%' }}
-              animate={isInView ? { y: '0%' } : { y: '110%' }}
-              transition={{ duration: 0.9, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
-            >
-              are built for{' '}
-              <span className="italic font-medium text-[#A1A1A1]">portfolios,</span>
-            </motion.p>
-          </div>
-          <div className="overflow-hidden">
-            <motion.p
-              className="font-display text-[clamp(2.4rem,6.5vw,6rem)] font-bold leading-[1.1] tracking-[-0.02em] text-[#F5F5F5]"
-              initial={{ y: '110%' }}
-              animate={isInView ? { y: '0%' } : { y: '110%' }}
-              transition={{ duration: 0.9, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
-            >
-              not for{' '}
-              <span className="italic font-medium text-[#A1A1A1]">people.</span>
-            </motion.p>
-          </div>
+        {/* Large statement */}
+        <motion.div style={{ y: sectionY }}>
+          {[
+            { text: 'Most digital products', italic: false, delay: 0 },
+            { text: 'are built for portfolios,', italic: true, delay: 0.07 },
+            { text: 'not for people.', italic: false, delay: 0.14 },
+          ].map(({ text, italic, delay }) => (
+            <div key={text} className="overflow-hidden">
+              <motion.p
+                className={`font-display text-[clamp(2.4rem,6.5vw,6rem)] font-bold leading-[1.1] tracking-[-0.02em] ${
+                  italic ? 'italic font-medium text-[#A1A1A1]' : 'text-[#F5F5F5]'
+                }`}
+                initial={{ y: '110%' }}
+                animate={isInView ? { y: '0%' } : { y: '110%' }}
+                transition={{ duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {text}
+              </motion.p>
+            </div>
+          ))}
         </motion.div>
 
-        {/* Supporting — personal reaction, not a service description */}
+        {/* Supporting copy */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -80,8 +74,6 @@ export default function Statement() {
             Not because they have to — because it felt good to use.
             That's the bar I hold myself to.
           </p>
-
-          {/* Small personal note — not a list of buzzwords */}
           <p className="font-sans text-sm text-[#555] mt-5 leading-relaxed">
             (Yes, I know this is a portfolio. The irony isn't lost on me.)
           </p>
@@ -90,3 +82,4 @@ export default function Statement() {
     </section>
   )
 }
+

@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 
 // Real, opinionated takes — not generic design wisdom
 const opinions = [
@@ -32,6 +32,13 @@ const opinions = [
 export default function Philosophy() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-15% 0px' })
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
+  const sp = { stiffness: 55, damping: 20, mass: 0.6 }
+  const listY = useSpring(useTransform(scrollYProgress, [0, 1], [50, -50]), sp)
 
   return (
     <section
@@ -82,15 +89,18 @@ export default function Philosophy() {
           </div>
         </div>
 
-        {/* Opinions — staggered, not a perfect grid */}
-        <div className="flex flex-col divide-y divide-[rgba(255,255,255,0.05)]">
+        {/* Opinions — staggered */}
+        <motion.div
+          className="flex flex-col divide-y divide-[rgba(255,255,255,0.05)]"
+          style={{ y: listY }}
+        >
           {opinions.map((opinion, i) => (
             <motion.div
               key={opinion.take}
               className="group py-7 md:py-9 flex flex-col md:flex-row md:items-start gap-4 md:gap-16 hover:bg-[rgba(255,255,255,0.01)] transition-colors duration-300 -mx-4 px-4 rounded-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.3 + i * 0.1, duration: 0.6 }}
+              initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
+              animate={isInView ? { opacity: 1, x: 0 } : {}}
+              transition={{ delay: 0.3 + i * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
               {/* Index number — small, not dominant */}
               <span className="font-sans text-[10px] text-[#555] tracking-[0.2em] uppercase mt-1 flex-shrink-0 w-6 md:w-10">
@@ -108,7 +118,7 @@ export default function Philosophy() {
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Closing note */}
         <motion.p
@@ -123,3 +133,4 @@ export default function Philosophy() {
     </section>
   )
 }
+

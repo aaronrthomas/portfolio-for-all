@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion'
 
 import LoadingScreen from './components/LoadingScreen'
 import CustomCursor from './components/CustomCursor'
@@ -19,6 +19,7 @@ import Contact from './sections/Contact'
 
 import ProjectDetail from './pages/ProjectDetail'
 import type { Project } from './data/projects'
+import ScrollFade from './components/ScrollFade'
 
 // Quick-nav sections for keyboard shortcut easter egg
 const quickNavSections = [
@@ -33,6 +34,10 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [quickNavOpen, setQuickNavOpen] = useState(false)
+
+  // ── Global scroll progress bar ──
+  const { scrollYProgress } = useScroll()
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
 
   // Keyboard shortcut: Cmd/Ctrl+K opens quick nav
   useEffect(() => {
@@ -75,6 +80,17 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Scroll progress bar */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 z-[999] h-[2px] origin-left"
+        style={{
+          scaleX,
+          background: 'linear-gradient(90deg, #1DBF73, #0f9555)',
+          boxShadow: '0 0 10px rgba(29,191,115,0.5)',
+        }}
+        aria-hidden="true"
+      />
+
       {/* Custom cursor (desktop only) */}
       <CustomCursor />
 
@@ -83,16 +99,18 @@ export default function App() {
 
       {/* Main content */}
       <main id="main-content">
+        {/* Hero manages its own scroll-exit — no ScrollFade needed */}
         <Hero />
-        <Statement />
+
+        <ScrollFade><Statement /></ScrollFade>
         <SelectedWork onProjectClick={handleProjectClick} />
-        <About />
-        <Skills />
-        <Experience />
-        <Community />
-        <Playground />
-        <Philosophy />
-        <Contact />
+        <ScrollFade><About /></ScrollFade>
+        <ScrollFade><Skills /></ScrollFade>
+        <ScrollFade><Experience /></ScrollFade>
+        <ScrollFade><Community /></ScrollFade>
+        <ScrollFade><Playground /></ScrollFade>
+        <ScrollFade><Philosophy /></ScrollFade>
+        <ScrollFade><Contact /></ScrollFade>
       </main>
 
       <Footer />

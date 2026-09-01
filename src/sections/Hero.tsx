@@ -1,269 +1,516 @@
-import { useEffect } from 'react'
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { useEffect, useRef } from 'react'
+import {
+  motion,
+  useMotionValue,
+  useScroll,
+  useSpring,
+  useTransform,
+} from 'framer-motion'
 
+/* ─────────────────────────────────────────────
+   3-D FLOATING PARTICLE
+───────────────────────────────────────────── */
+function Particle({
+  x, y, size, opacity, delay, color,
+}: {
+  x: string; y: string; size: number
+  opacity: number; delay: number; color: string
+}) {
+  return (
+    <motion.div
+      className="absolute pointer-events-none rounded-full"
+      style={{
+        left: x, top: y,
+        width: size, height: size,
+        background: color,
+        boxShadow: `0 0 ${size * 4}px ${color}`,
+        filter: 'blur(0.5px)',
+      }}
+      animate={{
+        y: ['0%', '-18px', '6px', '0%'],
+        opacity: [opacity * 0.5, opacity, opacity * 0.6, opacity * 0.5],
+        scale: [1, 1.15, 0.95, 1],
+      }}
+      transition={{
+        duration: 5 + delay * 1.3,
+        delay,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
+      aria-hidden="true"
+    />
+  )
+}
+
+/* ─────────────────────────────────────────────
+   3-D TILTABLE GLASS CARD
+───────────────────────────────────────────── */
+function TiltCard({ children }: { children: React.ReactNode }) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const rotX = useMotionValue(0)
+  const rotY = useMotionValue(0)
+  const sRotX = useSpring(rotX, { stiffness: 200, damping: 22 })
+  const sRotY = useSpring(rotY, { stiffness: 200, damping: 22 })
+  const glowX = useMotionValue(50)
+  const glowY = useMotionValue(50)
+  const sGlowX = useSpring(glowX, { stiffness: 120, damping: 20 })
+  const sGlowY = useSpring(glowY, { stiffness: 120, damping: 20 })
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = cardRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const px = (e.clientX - rect.left) / rect.width   // 0-1
+    const py = (e.clientY - rect.top) / rect.height   // 0-1
+    rotX.set((0.5 - py) * 18)
+    rotY.set((px - 0.5) * 24)
+    glowX.set(px * 100)
+    glowY.set(py * 100)
+  }
+
+  const handleLeave = () => {
+    rotX.set(0); rotY.set(0)
+    glowX.set(50); glowY.set(50)
+  }
+
+  const bgGlow = useTransform(
+    [sGlowX, sGlowY],
+    ([x, y]) =>
+      `radial-gradient(circle at ${x}% ${y}%, rgba(29,191,115,0.13) 0%, rgba(10,10,10,0.0) 60%)`
+  )
+
+  return (
+    <motion.div
+      ref={cardRef}
+      className="hero-glass-card cursor-default"
+      style={{
+        rotateX: sRotX,
+        rotateY: sRotY,
+        transformPerspective: 800,
+        background: bgGlow as any,
+      }}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      whileHover={{ scale: 1.025 }}
+      transition={{ scale: { type: 'spring', stiffness: 300, damping: 28 } }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   HERO SECTION
+───────────────────────────────────────────── */
 export default function Hero() {
+  const sectionRef = useRef<HTMLElement>(null)
 
-  const mouseX = useMotionValue(0)
-  const mouseY = useMotionValue(0)
+  // ── Scroll-linked exit ──
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  })
+  // Smooth spring config for scroll-driven values
+  const scrollSpring = { stiffness: 60, damping: 20, mass: 0.6 }
 
-  const springX = useSpring(mouseX, { stiffness: 50, damping: 20 })
-  const springY = useSpring(mouseY, { stiffness: 50, damping: 20 })
+  const rawScrollScale   = useTransform(scrollYProgress, [0, 1], [1, 1.12])
+  const rawScrollOpacity = useTransform(scrollYProgress, [0, 0.65], [1, 0])
+  const rawContentY      = useTransform(scrollYProgress, [0, 1], ['0%', '-20%'])
+  const rawContentOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
 
-  const layer1X = useTransform(springX, [-1, 1], [-12, 12])
-  const layer1Y = useTransform(springY, [-1, 1], [-8, 8])
-  const layer2X = useTransform(springX, [-1, 1], [-20, 20])
-  const layer2Y = useTransform(springY, [-1, 1], [-14, 14])
+  const scrollScale       = useSpring(rawScrollScale,    scrollSpring)
+  const scrollOpacity     = useSpring(rawScrollOpacity,  scrollSpring)
+  const contentY          = useSpring(rawContentY as any, scrollSpring)
+  const contentOpacity    = useSpring(rawContentOpacity, scrollSpring)
+
+  // Normalised mouse position [0 → 1]
+  const mouseX = useMotionValue(0.5)
+  const mouseY = useMotionValue(0.5)
+
+  // ── Scene tilt (whole hero panel rotates in 3-D) ──
+  const rawTiltX = useTransform(mouseY, [0, 1], [7, -7])
+  const rawTiltY = useTransform(mouseX, [0, 1], [-9, 9])
+  const tiltX = useSpring(rawTiltX, { stiffness: 28, damping: 22 })
+  const tiltY = useSpring(rawTiltY, { stiffness: 28, damping: 22 })
+
+  // ── Background parallax (deepest, moves most) ──
+  const rawBgX = useTransform(mouseX, [0, 1], [-32, 32])
+  const rawBgY = useTransform(mouseY, [0, 1], [-16, 16])
+  const bgX = useSpring(rawBgX, { stiffness: 20, damping: 22 })
+  const bgY = useSpring(rawBgY, { stiffness: 20, damping: 22 })
+
+  // ── Mid-layer parallax (crows / slash) ──
+  const rawMidX = useTransform(mouseX, [0, 1], [-14, 14])
+  const rawMidY = useTransform(mouseY, [0, 1], [-7, 7])
+  const midX = useSpring(rawMidX, { stiffness: 32, damping: 22 })
+  const midY = useSpring(rawMidY, { stiffness: 32, damping: 22 })
+
+  // ── Foreground parallax (card / title, moves least) ──
+  const rawFgX = useTransform(mouseX, [0, 1], [-6, 6])
+  const rawFgY = useTransform(mouseY, [0, 1], [-3, 3])
+  const fgX = useSpring(rawFgX, { stiffness: 45, damping: 22 })
+  const fgY = useSpring(rawFgY, { stiffness: 45, damping: 22 })
+
+  // ── Dynamic spotlight that follows mouse ──
+  const rawSpotLeft = useTransform(mouseX, [0, 1], ['10%', '85%'])
+  const rawSpotTop  = useTransform(mouseY, [0, 1], ['10%', '85%'])
+  const spotLeft = useSpring(rawSpotLeft as any, { stiffness: 50, damping: 26 })
+  const spotTop  = useSpring(rawSpotTop  as any, { stiffness: 50, damping: 26 })
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth) * 2 - 1
-      const y = (e.clientY / window.innerHeight) * 2 - 1
-      mouseX.set(x)
-      mouseY.set(y)
+    const onMove = (e: MouseEvent) => {
+      mouseX.set(e.clientX / window.innerWidth)
+      mouseY.set(e.clientY / window.innerHeight)
     }
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mousemove', onMove)
+    return () => window.removeEventListener('mousemove', onMove)
   }, [mouseX, mouseY])
 
   const scrollTo = (id: string) => {
-    const el = document.getElementById(id)
-    if (el) el.scrollIntoView({ behavior: 'smooth' })
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  // ── Depth-sorted particles ──
+  const particles = [
+    { x: '8%',  y: '28%', size: 3,   opacity: 0.55, delay: 0,   color: 'rgba(29,191,115,0.7)' },
+    { x: '20%', y: '72%', size: 2,   opacity: 0.35, delay: 1.1, color: 'rgba(255,255,255,0.6)' },
+    { x: '42%', y: '18%', size: 2.5, opacity: 0.40, delay: 2.2, color: 'rgba(255,255,255,0.5)' },
+    { x: '66%', y: '80%', size: 1.5, opacity: 0.30, delay: 0.6, color: 'rgba(29,191,115,0.5)' },
+    { x: '78%', y: '24%', size: 3.5, opacity: 0.45, delay: 1.7, color: 'rgba(255,255,255,0.4)' },
+    { x: '88%', y: '60%', size: 2,   opacity: 0.30, delay: 0.3, color: 'rgba(29,191,115,0.6)' },
+    { x: '55%', y: '90%', size: 2.5, opacity: 0.35, delay: 1.4, color: 'rgba(255,255,255,0.5)' },
+    { x: '33%', y: '45%', size: 1.5, opacity: 0.25, delay: 2.8, color: 'rgba(255,255,255,0.4)' },
+  ]
+
+  // ── Crows ──
+  const crows = [
+    { top: '11%', right: '32%', delay: 0.2, sz: 0.70 },
+    { top: '8%',  right: '23%', delay: 0.5, sz: 1.00 },
+    { top: '16%', right: '18%', delay: 0.8, sz: 0.85 },
+    { top: '7%',  right: '13%', delay: 0.3, sz: 0.60 },
+    { top: '21%', right: '9%',  delay: 1.0, sz: 0.75 },
+  ]
 
   return (
     <section
-      className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-[#0A0A0A]"
+      ref={sectionRef}
+      className="relative min-h-screen overflow-hidden bg-[#0c0c0c]"
+      style={{ perspective: '1100px', perspectiveOrigin: '50% 50%' }}
       aria-label="Hero section"
     >
-      {/* Grain texture */}
-      <div className="grain-overlay" aria-hidden="true" />
 
-      {/* Parallax green orb */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <motion.div
-          className="absolute"
-          style={{ x: layer2X, y: layer2Y, top: '10%', right: '8%' }}
-        >
-          <div className="w-[560px] h-[560px] rounded-full bg-[#1DBF73] opacity-[0.055] blur-[130px]" />
-        </motion.div>
-      </div>
-
-      {/* Secondary blue accent orb */}
-      <div
-        className="absolute pointer-events-none bottom-[5%] left-[-8%] w-[400px] h-[400px] rounded-full bg-[#2563eb] opacity-[0.03] blur-[110px]"
-        aria-hidden="true"
-      />
-
-      {/* Ghost watermark name */}
+      {/* ══════════════════════════════════════
+          3-D TILTING SCENE
+      ══════════════════════════════════════ */}
       <motion.div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-        style={{ x: layer1X, y: layer1Y }}
-        aria-hidden="true"
+        className="absolute inset-0"
+        style={{ rotateX: tiltX, rotateY: tiltY, scale: scrollScale, opacity: scrollOpacity }}
+        initial={{ rotateX: -22, rotateY: 28, scale: 0.86, opacity: 0 }}
+        animate={{ rotateX: 0,   rotateY: 0,  scale: 1,    opacity: 1 }}
+        transition={{ duration: 2.2, ease: [0.22, 1, 0.36, 1] }}
       >
-        <span
-          className="font-display font-bold leading-none tracking-[-0.04em]"
-          style={{
-            fontSize: 'clamp(7rem, 20vw, 22rem)',
-            WebkitTextStroke: '1px rgba(255,255,255,0.04)',
-            color: 'transparent',
-          }}
+
+        {/* ── DEPTH LAYER 0 — Background image ── */}
+        <motion.div
+          className="absolute inset-0 scale-125"
+          style={{ x: bgX, y: bgY }}
+          aria-hidden="true"
         >
-          AARON
-        </span>
+          <img
+            src="/hero-warrior.jpg"
+            alt=""
+            className="w-full h-full object-cover object-center"
+            draggable={false}
+          />
+          {/* Colour grading */}
+          <div className="absolute inset-0"
+            style={{ background: 'linear-gradient(120deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.08) 55%, rgba(0,0,0,0.65) 100%)' }}
+          />
+          <div className="absolute inset-0"
+            style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.62) 0%, transparent 40%, rgba(0,0,0,0.9) 100%)' }}
+          />
+          {/* Subtle teal colour wash */}
+          <div className="absolute inset-0"
+            style={{ background: 'radial-gradient(ellipse at 60% 40%, rgba(0,60,40,0.18) 0%, transparent 65%)' }}
+          />
+        </motion.div>
+
+        {/* ── DEPTH LAYER 1 — Diagonal light slash ── */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none hero-slash"
+          style={{ x: midX, y: midY }}
+          aria-hidden="true"
+        />
+
+        {/* ── DEPTH LAYER 1 — Mouse spotlight ── */}
+        <motion.div
+          className="absolute pointer-events-none"
+          style={{
+            width: 700,
+            height: 700,
+            left: spotLeft,
+            top: spotTop,
+            x: '-50%',
+            y: '-50%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.045) 0%, transparent 65%)',
+            borderRadius: '50%',
+          }}
+          aria-hidden="true"
+        />
+
+        {/* ── DEPTH LAYER 1 — Floating particles ── */}
+        {particles.map((p, i) => <Particle key={i} {...p} />)}
+
+        {/* ── DEPTH LAYER 2 — Crows (mid) ── */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          style={{ x: midX, y: midY }}
+          aria-hidden="true"
+        >
+          {crows.map((c, i) => (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{ top: c.top, right: c.right }}
+              initial={{ opacity: 0, y: -14 }}
+              animate={{
+                opacity: [0, 0.7, 0.5, 0.7],
+                y: [0, -10, 2, 0],
+              }}
+              transition={{
+                opacity: { duration: 0.5, delay: c.delay + 1.6 },
+                y: { duration: 4.5 + i * 0.4, delay: c.delay + 1.6, repeat: Infinity, ease: 'easeInOut' },
+              }}
+            >
+              <svg width={28 * c.sz} height={16 * c.sz} viewBox="0 0 28 16" fill="none">
+                <path
+                  d="M14 8 C10 4 4 2 0 4 C4 4 7 6 9 8 C6 7 3 8 1 10 C5 9 9 9 11 10 C12 11 13 12 14 12 C15 12 16 11 17 10 C19 9 23 9 27 10 C25 8 22 7 19 8 C21 6 24 4 28 4 C24 2 18 4 14 8Z"
+                  fill="rgba(255,255,255,0.55)"
+                />
+              </svg>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* ── DEPTH LAYER 3 — Grain ── */}
+        <div className="grain-overlay" style={{ opacity: 0.055 }} aria-hidden="true" />
+
       </motion.div>
+      {/* ══ end of 3-D tilting scene ══ */}
 
-      {/* Main content grid */}
-      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 md:px-10 pt-28 pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-12 md:gap-8 items-start">
 
-          {/* LEFT — headline block */}
-          <div className="flex flex-col">
+      {/* ══════════════════════════════════════
+          CONTENT (above scene, keeps readability)
+      ══════════════════════════════════════ */}
+      <motion.div
+        className="relative z-10 min-h-screen flex flex-col"
+        style={{ perspective: '900px', y: contentY, opacity: contentOpacity }}
+      >
 
-            {/* Availability tag */}
+        {/* Nav spacer */}
+        <div className="h-20" />
+
+        {/* Main grid */}
+        <div className="flex-1 flex items-center w-full max-w-[1400px] mx-auto px-6 md:px-12">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+
+            {/* ── LEFT — glass card stack (closest layer) ── */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="mb-10 flex items-center gap-3"
+              className="flex flex-col gap-6"
+              style={{ x: fgX, y: fgY }}
+              initial={{ opacity: 0, x: -60, rotateY: -12 }}
+              animate={{ opacity: 1, x: 0,   rotateY: 0 }}
+              transition={{ duration: 1.4, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
-              <span className="w-2 h-2 rounded-full bg-[#1DBF73] animate-pulse" aria-hidden="true" />
-              <span className="font-sans text-[11px] tracking-[0.22em] text-[#A1A1A1] uppercase">
-                Available for work — Kerala, India
-              </span>
-            </motion.div>
 
-            {/* Role badge */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.35 }}
-              className="mb-6 self-start"
-            >
-              <div className="inline-flex items-center gap-2 border border-[rgba(255,255,255,0.1)] rounded-full px-4 py-1.5 bg-[rgba(255,255,255,0.03)]">
-                <span className="font-sans text-[10px] text-[#555] tracking-widest uppercase">CS student</span>
-                <span className="w-px h-3 bg-[rgba(255,255,255,0.12)]" />
-                <span className="font-sans text-[10px] text-[#1DBF73] tracking-widest uppercase font-semibold">Designer & Developer</span>
-              </div>
-            </motion.div>
+              {/* Tiltable glass card */}
+              <TiltCard>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1DBF73] animate-pulse" />
+                  <span className="text-[10px] tracking-[0.22em] text-[#1DBF73] uppercase font-sans font-semibold">
+                    Available for work
+                  </span>
+                </div>
+                <p className="font-sans text-[#d4d4d4] text-sm md:text-[0.95rem] leading-relaxed">
+                  Are you ready to see code and design<br />
+                  done by the same hand — with the<br />
+                  precision of a craftsman?
+                </p>
+              </TiltCard>
 
-            {/* Staggered headline lines */}
-            <div className="overflow-hidden mb-1">
-              <motion.h1
-                className="font-display font-bold leading-[0.93] tracking-[-0.03em] text-[#F5F5F5]"
-                style={{ fontSize: 'clamp(3rem, 8.5vw, 8rem)' }}
-                initial={{ y: '110%' }}
-                animate={{ y: '0%' }}
-                transition={{ duration: 1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              {/* CTAs */}
+              <motion.div
+                className="flex items-center gap-3 flex-wrap"
+                initial={{ opacity: 0, y: 20, rotateX: 8 }}
+                animate={{ opacity: 1, y: 0,  rotateX: 0 }}
+                transition={{ duration: 0.9, delay: 1.3, ease: [0.22, 1, 0.36, 1] }}
               >
-                Most devs
-              </motion.h1>
-            </div>
-            <div className="overflow-hidden mb-1">
-              <motion.p
-                className="font-display font-bold leading-[0.93] tracking-[-0.03em] text-[#A1A1A1] italic"
-                style={{ fontSize: 'clamp(3rem, 8.5vw, 8rem)' }}
-                initial={{ y: '110%' }}
-                animate={{ y: '0%' }}
-                transition={{ duration: 1, delay: 0.62, ease: [0.22, 1, 0.36, 1] }}
-              >
-                skip design.
-              </motion.p>
-            </div>
-            <div className="overflow-hidden mb-1">
-              <motion.p
-                className="font-display font-bold leading-[0.93] tracking-[-0.03em] text-[#F5F5F5]"
-                style={{ fontSize: 'clamp(3rem, 8.5vw, 8rem)' }}
-                initial={{ y: '110%' }}
-                animate={{ y: '0%' }}
-                transition={{ duration: 1, delay: 0.74, ease: [0.22, 1, 0.36, 1] }}
-              >
-                Most designers
-              </motion.p>
-            </div>
-            {/* Last line — no overflow-hidden since flex-wrap can create 2nd line that'd be clipped */}
-            <motion.div
-              className="font-display font-bold leading-[0.93] tracking-[-0.03em] flex items-baseline gap-3 flex-wrap"
-              style={{ fontSize: 'clamp(3rem, 8.5vw, 8rem)' }}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.86, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <span className="italic text-[#A1A1A1]">skip code.</span>
-              <span className="hero-both-wrap text-[#F5F5F5]">
-                I don't.
-                <svg
-                  className="hero-underline"
-                  viewBox="0 0 80 10"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M2 7 C15 3, 35 9, 55 5 C65 2, 74 6, 78 4"
-                    stroke="#1DBF73"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </span>
-            </motion.div>
-
-            {/* Description + CTAs */}
-            <motion.div
-              className="mt-12 flex flex-col sm:flex-row sm:items-center gap-6"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <p className="font-sans text-[#555] text-sm md:text-base leading-relaxed max-w-xs">
-                I got tired of designing things I couldn't build — so I learned both.
-              </p>
-              <div className="flex items-center gap-3 flex-shrink-0">
                 <button
+                  id="hero-cta-work"
                   onClick={() => scrollTo('work')}
-                  className="group inline-flex items-center gap-2 bg-[#F5F5F5] text-[#0A0A0A] font-sans font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-[#1DBF73] transition-all duration-300"
+                  className="hero-cta-primary group"
                   data-cursor="view"
                 >
-                  See work
-                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">
-                    <path d="M2 12L12 2M12 2H5M12 2V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  See Work
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none"
+                    className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">
+                    <path d="M2 12L12 2M12 2H5M12 2V9" stroke="currentColor" strokeWidth="2.2"
+                      strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
                 <button
+                  id="hero-cta-contact"
                   onClick={() => scrollTo('contact')}
-                  className="group inline-flex items-center gap-2 border border-[rgba(255,255,255,0.12)] text-[#F5F5F5] font-sans font-medium text-sm px-6 py-3.5 rounded-full hover:border-[#1DBF73] hover:text-[#1DBF73] transition-all duration-300"
+                  className="hero-cta-secondary"
                   data-cursor="hover"
                 >
                   Say hello
                 </button>
-              </div>
-            </motion.div>
-          </div>
+              </motion.div>
 
-          {/* RIGHT — editorial sidebar */}
-          <motion.aside
-            className="hidden md:flex flex-col gap-8 items-end text-right w-[180px] flex-shrink-0"
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.9, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            aria-label="Stats"
-          >
-            {/* Rotated year label */}
-            <span
-              className="font-sans text-[9px] tracking-[0.3em] text-[#333] uppercase self-center"
-              style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-            >
-              PORTFOLIO · 2025
-            </span>
-
-            {/* Stat cards */}
-            {[
-              { num: '3+', label: 'Years building' },
-              { num: '12+', label: 'Projects shipped' },
-              { num: '∞', label: 'Things to learn' },
-            ].map((stat, i) => (
+              {/* Availability chips */}
               <motion.div
-                key={stat.label}
-                className="group flex flex-col items-end gap-0.5 cursor-default"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 1.0 + i * 0.12 }}
+                className="flex flex-col gap-1.5"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 1.7 }}
               >
-                <span className="font-display font-bold text-[2.2rem] text-[#F5F5F5] leading-none group-hover:text-[#1DBF73] transition-colors duration-300">
-                  {stat.num}
-                </span>
-                <span className="font-sans text-[10px] text-[#555] tracking-[0.1em] uppercase">
-                  {stat.label}
+                <span className="text-[9px] tracking-[0.22em] text-[#555] uppercase font-sans">Currently available</span>
+                <div className="flex items-center gap-2">
+                  {['Freelance', 'Full-time', 'Collaboration'].map((label, i) => (
+                    <motion.div
+                      key={label}
+                      className="flex items-center border border-[rgba(255,255,255,0.12)] rounded px-2.5 py-1 bg-[rgba(0,0,0,0.45)]"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.8 + i * 0.08 }}
+                      whileHover={{ borderColor: 'rgba(29,191,115,0.4)', scale: 1.05 }}
+                    >
+                      <span className="text-[9px] font-sans text-[#888] tracking-wide">{label}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* ── RIGHT — giant ghost title (deeper layer) ── */}
+            <motion.div
+              className="flex flex-col justify-end items-end"
+              style={{ x: midX, y: midY }}
+            >
+              <div className="overflow-hidden">
+                <motion.h1
+                  className="hero-giant-title"
+                  initial={{ y: '115%', rotateX: -14, opacity: 0 }}
+                  animate={{ y: '0%',   rotateX: 0,   opacity: 1 }}
+                  transition={{ duration: 1.2, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  aria-label="Aaron"
+                >
+                  AARON
+                </motion.h1>
+              </div>
+              <div className="overflow-hidden">
+                <motion.p
+                  className="hero-giant-subtitle"
+                  initial={{ y: '115%', rotateX: -14, opacity: 0 }}
+                  animate={{ y: '0%',   rotateX: 0,   opacity: 1 }}
+                  transition={{ duration: 1.2, delay: 0.62, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  THOMAS
+                </motion.p>
+              </div>
+
+              {/* Role tag */}
+              <motion.div
+                className="flex items-center gap-3 mt-4"
+                initial={{ opacity: 0, x: 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.9, delay: 1.1 }}
+              >
+                <div className="w-8 h-px bg-[rgba(255,255,255,0.18)]" />
+                <span className="text-[10px] tracking-[0.3em] text-[#888] uppercase font-sans">
+                  Designer · Developer · Student
                 </span>
               </motion.div>
-            ))}
+            </motion.div>
 
-            {/* Thin vertical rule */}
-            <motion.div
-              className="w-px self-center bg-gradient-to-b from-transparent via-[rgba(255,255,255,0.07)] to-transparent"
-              style={{ height: 64 }}
-              initial={{ scaleY: 0 }}
-              animate={{ scaleY: 1 }}
-              transition={{ duration: 0.8, delay: 1.4 }}
-            />
-
-            {/* Currently */}
-            <div className="flex flex-col items-end gap-1.5">
-              <span className="font-sans text-[9px] tracking-[0.2em] text-[#444] uppercase mb-1">Currently</span>
-              <span className="font-sans text-[11px] text-[#555]">🎓 CS @ Kerala</span>
-              <span className="font-sans text-[11px] text-[#555]">🛠 building this</span>
-              <span className="font-sans text-[11px] text-[#555]">🎧 good music</span>
-            </div>
-          </motion.aside>
-
+          </div>
         </div>
-      </div>
+
+        {/* ── BOTTOM BAR ── */}
+        <motion.div
+          className="w-full max-w-[1400px] mx-auto px-6 md:px-12 pb-8 flex items-end justify-between"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 2.0 }}
+        >
+          {/* Social icons */}
+          <div className="flex items-center gap-3">
+            {[
+              { label: 'Twitter',  href: '#', icon: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' },
+              { label: 'LinkedIn', href: '#', icon: 'M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z M4 6a2 2 0 100-4 2 2 0 000 4z' },
+              { label: 'GitHub',   href: '#', icon: 'M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z' },
+            ].map(({ label, href, icon }) => (
+              <motion.a
+                key={label}
+                href={href}
+                aria-label={label}
+                className="hero-social-icon group"
+                whileHover={{ scale: 1.15, rotate: -5 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                  className="opacity-50 group-hover:opacity-100 transition-opacity">
+                  <path d={icon} />
+                </svg>
+              </motion.a>
+            ))}
+          </div>
+
+          {/* Animated scroll cue */}
+          <button
+            onClick={() => scrollTo('work')}
+            className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-[#555] uppercase font-sans hover:text-[#1DBF73] transition-colors duration-300"
+            aria-label="Next section"
+          >
+            Scroll
+            <motion.span
+              className="inline-block"
+              animate={{ x: [0, 5, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              »
+            </motion.span>
+          </button>
+        </motion.div>
+      </motion.div>
+
+      {/* ── VERTICAL LABEL (fixed to right edge) ── */}
+      <motion.div
+        className="absolute right-8 top-1/2 -translate-y-1/2 hidden md:flex flex-col items-center gap-3 pointer-events-none z-20"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: 2.3 }}
+        aria-hidden="true"
+      >
+        <span
+          className="text-[8px] tracking-[0.3em] text-[#3a3a3a] uppercase"
+          style={{ writingMode: 'vertical-rl' }}
+        >
+          PORTFOLIO · 2025
+        </span>
+        <motion.div
+          className="w-px bg-gradient-to-b from-transparent via-[rgba(255,255,255,0.18)] to-transparent"
+          style={{ height: 80 }}
+          initial={{ scaleY: 0 }}
+          animate={{ scaleY: 1 }}
+          transition={{ duration: 1.1, delay: 2.5 }}
+        />
+      </motion.div>
 
       {/* Bottom fade */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
-        style={{ background: 'linear-gradient(to bottom, transparent, #0A0A0A)' }}
+        className="absolute bottom-0 left-0 right-0 h-28 pointer-events-none z-20"
+        style={{ background: 'linear-gradient(to bottom, transparent, #0c0c0c)' }}
         aria-hidden="true"
       />
     </section>

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { motion, useInView, useScroll, useSpring, useTransform, AnimatePresence } from 'framer-motion'
 import { playgroundItems } from '../data/community'
 
 const bgGradients: Record<string, string> = {
@@ -17,6 +17,13 @@ export default function Playground() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-10% 0px' })
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
+  const sp = { stiffness: 55, damping: 20, mass: 0.6 }
+  const gridY = useSpring(useTransform(scrollYProgress, [0, 1], [50, -50]), sp)
 
   return (
     <section
@@ -62,7 +69,7 @@ export default function Playground() {
         </div>
 
         {/* Masonry-style grid */}
-        <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
+        <motion.div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3" style={{ y: gridY }}>
           {playgroundItems.map((item, i) => {
             const isHovered = hoveredId === item.id
             const isTall = i % 3 === 0
@@ -75,9 +82,9 @@ export default function Playground() {
                   height: isTall ? 280 : 200,
                   background: bgGradients[item.id] || `radial-gradient(ellipse, ${item.accentColor} 0%, ${item.bgColor} 70%)`,
                 }}
-                initial={{ opacity: 0, y: 30 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 0.1 + i * 0.08, duration: 0.7 }}
+                initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
+                transition={{ delay: 0.06 + i * 0.07, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
                 data-cursor="explore"
@@ -135,7 +142,7 @@ export default function Playground() {
               </motion.div>
             )
           })}
-        </div>
+        </motion.div>
 
         {/* Note */}
         <motion.p
@@ -150,3 +157,4 @@ export default function Playground() {
     </section>
   )
 }
+

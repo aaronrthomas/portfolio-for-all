@@ -1,10 +1,17 @@
 import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 import { communityItems } from '../data/community'
 
 export default function Community() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-10% 0px' })
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
+  const sp = { stiffness: 55, damping: 20, mass: 0.6 }
+  const gridY = useSpring(useTransform(scrollYProgress, [0, 1], [40, -40]), sp)
 
   return (
     <section
@@ -52,14 +59,17 @@ export default function Community() {
         </div>
 
         {/* Community grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[rgba(255,255,255,0.05)]">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[rgba(255,255,255,0.05)]"
+          style={{ y: gridY }}
+        >
           {communityItems.map((item, i) => (
             <motion.div
               key={item.id}
               className="bg-[#0A0A0A] p-8 group hover:bg-[#111111] transition-colors duration-300"
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.1 + i * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0, scale: 0.94, y: 24 }}
+              animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
+              transition={{ delay: 0.08 + i * 0.09, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="flex items-start justify-between mb-5">
                 <span className="font-sans text-xs text-[#A1A1A1] tracking-wider">{item.year}</span>
@@ -86,7 +96,7 @@ export default function Community() {
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Bottom message */}
         <motion.div
@@ -103,3 +113,4 @@ export default function Community() {
     </section>
   )
 }
+

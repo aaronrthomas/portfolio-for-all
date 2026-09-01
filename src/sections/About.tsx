@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion'
 
 const disciplines = [
   { label: 'UI/UX Design', detail: 'Figma, obsessing over spacing' },
@@ -13,6 +13,14 @@ const disciplines = [
 export default function About() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-10% 0px' })
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
+  const sp = { stiffness: 55, damping: 20, mass: 0.6 }
+  const headingY   = useSpring(useTransform(scrollYProgress, [0, 1], [40, -60]), sp)
+  const colRightX  = useSpring(useTransform(scrollYProgress, [0, 1], [30, -30]), sp)
 
   return (
     <section
@@ -41,6 +49,7 @@ export default function About() {
             <div className="overflow-hidden mb-6">
               <motion.h2
                 className="font-display text-[clamp(2rem,5vw,4rem)] font-bold text-[#F5F5F5] leading-[1.1] tracking-[-0.02em]"
+                style={{ y: headingY }}
                 initial={{ y: '100%' }}
                 animate={isInView ? { y: '0%' } : {}}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
@@ -115,7 +124,7 @@ export default function About() {
           </div>
 
           {/* Right column: disciplines */}
-          <div>
+          <motion.div style={{ x: colRightX }}>
             <motion.p
               className="font-sans text-[#555] text-sm mb-6"
               initial={{ opacity: 0 }}
@@ -143,9 +152,10 @@ export default function About() {
                 </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
   )
 }
+
