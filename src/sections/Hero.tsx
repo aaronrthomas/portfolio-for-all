@@ -8,180 +8,58 @@ import {
 } from 'framer-motion'
 
 /* ─────────────────────────────────────────────
-   3-D FLOATING PARTICLE
-───────────────────────────────────────────── */
-function Particle({
-  x, y, size, opacity, delay, color,
-}: {
-  x: string; y: string; size: number
-  opacity: number; delay: number; color: string
-}) {
-  return (
-    <motion.div
-      className="absolute pointer-events-none rounded-full"
-      style={{
-        left: x, top: y,
-        width: size, height: size,
-        background: color,
-        boxShadow: `0 0 ${size * 4}px ${color}`,
-        filter: 'blur(0.5px)',
-      }}
-      animate={{
-        y: ['0%', '-18px', '6px', '0%'],
-        opacity: [opacity * 0.5, opacity, opacity * 0.6, opacity * 0.5],
-        scale: [1, 1.15, 0.95, 1],
-      }}
-      transition={{
-        duration: 5 + delay * 1.3,
-        delay,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      }}
-      aria-hidden="true"
-    />
-  )
-}
-
-/* ─────────────────────────────────────────────
-   3-D TILTABLE GLASS CARD
-───────────────────────────────────────────── */
-function TiltCard({ children }: { children: React.ReactNode }) {
-  const cardRef = useRef<HTMLDivElement>(null)
-  const rotX = useMotionValue(0)
-  const rotY = useMotionValue(0)
-  const sRotX = useSpring(rotX, { stiffness: 200, damping: 22 })
-  const sRotY = useSpring(rotY, { stiffness: 200, damping: 22 })
-  const glowX = useMotionValue(50)
-  const glowY = useMotionValue(50)
-  const sGlowX = useSpring(glowX, { stiffness: 120, damping: 20 })
-  const sGlowY = useSpring(glowY, { stiffness: 120, damping: 20 })
-
-  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = cardRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const px = (e.clientX - rect.left) / rect.width   // 0-1
-    const py = (e.clientY - rect.top) / rect.height   // 0-1
-    rotX.set((0.5 - py) * 18)
-    rotY.set((px - 0.5) * 24)
-    glowX.set(px * 100)
-    glowY.set(py * 100)
-  }
-
-  const handleLeave = () => {
-    rotX.set(0); rotY.set(0)
-    glowX.set(50); glowY.set(50)
-  }
-
-  const bgGlow = useTransform(
-    [sGlowX, sGlowY],
-    ([x, y]) =>
-      `radial-gradient(circle at ${x}% ${y}%, rgba(29,191,115,0.13) 0%, rgba(10,10,10,0.0) 60%)`
-  )
-
-  return (
-    <motion.div
-      ref={cardRef}
-      className="hero-glass-card cursor-default"
-      style={{
-        rotateX: sRotX,
-        rotateY: sRotY,
-        transformPerspective: 800,
-        background: bgGlow as any,
-      }}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      whileHover={{ scale: 1.025 }}
-      transition={{ scale: { type: 'spring', stiffness: 300, damping: 28 } }}
-    >
-      {children}
-    </motion.div>
-  )
-}
-
-/* ─────────────────────────────────────────────
    HERO SECTION
+   Performance notes:
+   - No CSS perspective/rotateX/Y (triggers expensive compositing)
+   - 2 mouse springs only (bgX/Y) — foreground is CSS-only
+   - No backdrop-filter blur on glass card
+   - No particles (each was its own animation loop)
+   - No mouse spotlight (large layer repositioned every frame)
+   - Crows: entrance only, no repeating animation
+   - will-change: transform on moving layers
 ───────────────────────────────────────────── */
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null)
 
-  // ── Scroll-linked exit ──
+  // ── Scroll exit (content only) ──
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start start', 'end start'],
   })
-  // Smooth spring config for scroll-driven values
-  const scrollSpring = { stiffness: 60, damping: 20, mass: 0.6 }
+  const sp = { stiffness: 60, damping: 22, mass: 0.6 }
+  const contentY       = useSpring(useTransform(scrollYProgress, [0, 1], ['0%', '-18%']), sp)
+  const contentOpacity = useSpring(useTransform(scrollYProgress, [0, 0.5], [1, 0]), sp)
 
-  const rawScrollScale   = useTransform(scrollYProgress, [0, 1], [1, 1.12])
-  const rawScrollOpacity = useTransform(scrollYProgress, [0, 0.65], [1, 0])
-  const rawContentY      = useTransform(scrollYProgress, [0, 1], ['0%', '-20%'])
-  const rawContentOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
-
-  const scrollScale       = useSpring(rawScrollScale,    scrollSpring)
-  const scrollOpacity     = useSpring(rawScrollOpacity,  scrollSpring)
-  const contentY          = useSpring(rawContentY as any, scrollSpring)
-  const contentOpacity    = useSpring(rawContentOpacity, scrollSpring)
-
-  // Normalised mouse position [0 → 1]
+  // ── Mouse parallax — bg only (2 springs total, not 12) ──
   const mouseX = useMotionValue(0.5)
   const mouseY = useMotionValue(0.5)
 
-  // ── Scene tilt (whole hero panel rotates in 3-D) ──
-  const rawTiltX = useTransform(mouseY, [0, 1], [7, -7])
-  const rawTiltY = useTransform(mouseX, [0, 1], [-9, 9])
-  const tiltX = useSpring(rawTiltX, { stiffness: 28, damping: 22 })
-  const tiltY = useSpring(rawTiltY, { stiffness: 28, damping: 22 })
-
-  // ── Background parallax (deepest, moves most) ──
-  const rawBgX = useTransform(mouseX, [0, 1], [-32, 32])
-  const rawBgY = useTransform(mouseY, [0, 1], [-16, 16])
-  const bgX = useSpring(rawBgX, { stiffness: 20, damping: 22 })
-  const bgY = useSpring(rawBgY, { stiffness: 20, damping: 22 })
-
-  // ── Mid-layer parallax (crows / slash) ──
-  const rawMidX = useTransform(mouseX, [0, 1], [-14, 14])
-  const rawMidY = useTransform(mouseY, [0, 1], [-7, 7])
-  const midX = useSpring(rawMidX, { stiffness: 32, damping: 22 })
-  const midY = useSpring(rawMidY, { stiffness: 32, damping: 22 })
-
-  // ── Foreground parallax (card / title, moves least) ──
-  const rawFgX = useTransform(mouseX, [0, 1], [-6, 6])
-  const rawFgY = useTransform(mouseY, [0, 1], [-3, 3])
-  const fgX = useSpring(rawFgX, { stiffness: 45, damping: 22 })
-  const fgY = useSpring(rawFgY, { stiffness: 45, damping: 22 })
-
-  // ── Dynamic spotlight that follows mouse ──
-  const rawSpotLeft = useTransform(mouseX, [0, 1], ['10%', '85%'])
-  const rawSpotTop  = useTransform(mouseY, [0, 1], ['10%', '85%'])
-  const spotLeft = useSpring(rawSpotLeft as any, { stiffness: 50, damping: 26 })
-  const spotTop  = useSpring(rawSpotTop  as any, { stiffness: 50, damping: 26 })
+  const rawBgX = useTransform(mouseX, [0, 1], [-24, 24])
+  const rawBgY = useTransform(mouseY, [0, 1], [-12, 12])
+  const bgX = useSpring(rawBgX, { stiffness: 22, damping: 28 })
+  const bgY = useSpring(rawBgY, { stiffness: 22, damping: 28 })
 
   useEffect(() => {
+    let rafId: number
     const onMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX / window.innerWidth)
-      mouseY.set(e.clientY / window.innerHeight)
+      // Throttle via rAF so we don't update on every pixel
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        mouseX.set(e.clientX / window.innerWidth)
+        mouseY.set(e.clientY / window.innerHeight)
+      })
     }
-    window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      cancelAnimationFrame(rafId)
+    }
   }, [mouseX, mouseY])
 
-  const scrollTo = (id: string) => {
+  const scrollTo = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-  }
 
-  // ── Depth-sorted particles ──
-  const particles = [
-    { x: '8%',  y: '28%', size: 3,   opacity: 0.55, delay: 0,   color: 'rgba(29,191,115,0.7)' },
-    { x: '20%', y: '72%', size: 2,   opacity: 0.35, delay: 1.1, color: 'rgba(255,255,255,0.6)' },
-    { x: '42%', y: '18%', size: 2.5, opacity: 0.40, delay: 2.2, color: 'rgba(255,255,255,0.5)' },
-    { x: '66%', y: '80%', size: 1.5, opacity: 0.30, delay: 0.6, color: 'rgba(29,191,115,0.5)' },
-    { x: '78%', y: '24%', size: 3.5, opacity: 0.45, delay: 1.7, color: 'rgba(255,255,255,0.4)' },
-    { x: '88%', y: '60%', size: 2,   opacity: 0.30, delay: 0.3, color: 'rgba(29,191,115,0.6)' },
-    { x: '55%', y: '90%', size: 2.5, opacity: 0.35, delay: 1.4, color: 'rgba(255,255,255,0.5)' },
-    { x: '33%', y: '45%', size: 1.5, opacity: 0.25, delay: 2.8, color: 'rgba(255,255,255,0.4)' },
-  ]
-
-  // ── Crows ──
+  // ── Crows — static positions, entrance only ──
   const crows = [
     { top: '11%', right: '32%', delay: 0.2, sz: 0.70 },
     { top: '8%',  right: '23%', delay: 0.5, sz: 1.00 },
@@ -194,136 +72,81 @@ export default function Hero() {
     <section
       ref={sectionRef}
       className="relative min-h-screen overflow-hidden bg-[#0c0c0c]"
-      style={{ perspective: '1100px', perspectiveOrigin: '50% 50%' }}
       aria-label="Hero section"
     >
 
-      {/* ══════════════════════════════════════
-          3-D TILTING SCENE
-      ══════════════════════════════════════ */}
+      {/* ── BACKGROUND — parallax layer (GPU composited) ── */}
       <motion.div
-        className="absolute inset-0"
-        style={{ rotateX: tiltX, rotateY: tiltY, scale: scrollScale, opacity: scrollOpacity }}
-        initial={{ rotateX: -22, rotateY: 28, scale: 0.86, opacity: 0 }}
-        animate={{ rotateX: 0,   rotateY: 0,  scale: 1,    opacity: 1 }}
-        transition={{ duration: 2.2, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute inset-0 scale-[1.12]"
+        style={{ x: bgX, y: bgY, willChange: 'transform' }}
+        aria-hidden="true"
       >
-
-        {/* ── DEPTH LAYER 0 — Background image ── */}
-        <motion.div
-          className="absolute inset-0 scale-125"
-          style={{ x: bgX, y: bgY }}
-          aria-hidden="true"
-        >
-          <img
-            src="/hero-warrior.jpg"
-            alt=""
-            className="w-full h-full object-cover object-center"
-            draggable={false}
-          />
-          {/* Colour grading */}
-          <div className="absolute inset-0"
-            style={{ background: 'linear-gradient(120deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.08) 55%, rgba(0,0,0,0.65) 100%)' }}
-          />
-          <div className="absolute inset-0"
-            style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.62) 0%, transparent 40%, rgba(0,0,0,0.9) 100%)' }}
-          />
-          {/* Subtle teal colour wash */}
-          <div className="absolute inset-0"
-            style={{ background: 'radial-gradient(ellipse at 60% 40%, rgba(0,60,40,0.18) 0%, transparent 65%)' }}
-          />
-        </motion.div>
-
-        {/* ── DEPTH LAYER 1 — Diagonal light slash ── */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none hero-slash"
-          style={{ x: midX, y: midY }}
-          aria-hidden="true"
+        <img
+          src="/hero-warrior.jpg"
+          alt=""
+          className="w-full h-full object-cover object-center"
+          draggable={false}
         />
-
-        {/* ── DEPTH LAYER 1 — Mouse spotlight ── */}
-        <motion.div
-          className="absolute pointer-events-none"
-          style={{
-            width: 700,
-            height: 700,
-            left: spotLeft,
-            top: spotTop,
-            x: '-50%',
-            y: '-50%',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.045) 0%, transparent 65%)',
-            borderRadius: '50%',
-          }}
-          aria-hidden="true"
+        {/* Colour grading */}
+        <div className="absolute inset-0"
+          style={{ background: 'linear-gradient(120deg, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.10) 55%, rgba(0,0,0,0.65) 100%)' }}
         />
-
-        {/* ── DEPTH LAYER 1 — Floating particles ── */}
-        {particles.map((p, i) => <Particle key={i} {...p} />)}
-
-        {/* ── DEPTH LAYER 2 — Crows (mid) ── */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          style={{ x: midX, y: midY }}
-          aria-hidden="true"
-        >
-          {crows.map((c, i) => (
-            <motion.div
-              key={i}
-              className="absolute"
-              style={{ top: c.top, right: c.right }}
-              initial={{ opacity: 0, y: -14 }}
-              animate={{
-                opacity: [0, 0.7, 0.5, 0.7],
-                y: [0, -10, 2, 0],
-              }}
-              transition={{
-                opacity: { duration: 0.5, delay: c.delay + 1.6 },
-                y: { duration: 4.5 + i * 0.4, delay: c.delay + 1.6, repeat: Infinity, ease: 'easeInOut' },
-              }}
-            >
-              <svg width={28 * c.sz} height={16 * c.sz} viewBox="0 0 28 16" fill="none">
-                <path
-                  d="M14 8 C10 4 4 2 0 4 C4 4 7 6 9 8 C6 7 3 8 1 10 C5 9 9 9 11 10 C12 11 13 12 14 12 C15 12 16 11 17 10 C19 9 23 9 27 10 C25 8 22 7 19 8 C21 6 24 4 28 4 C24 2 18 4 14 8Z"
-                  fill="rgba(255,255,255,0.55)"
-                />
-              </svg>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* ── DEPTH LAYER 3 — Grain ── */}
-        <div className="grain-overlay" style={{ opacity: 0.055 }} aria-hidden="true" />
-
+        <div className="absolute inset-0"
+          style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.62) 0%, transparent 40%, rgba(0,0,0,0.90) 100%)' }}
+        />
+        <div className="absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse at 60% 40%, rgba(0,60,40,0.18) 0%, transparent 65%)' }}
+        />
       </motion.div>
-      {/* ══ end of 3-D tilting scene ══ */}
 
+      {/* ── Diagonal slash ── */}
+      <div className="absolute inset-0 pointer-events-none hero-slash" aria-hidden="true" />
+
+      {/* ── Crows (entrance only, no repeating animation) ── */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        {crows.map((c, i) => (
+          <motion.div
+            key={i}
+            className="absolute"
+            style={{ top: c.top, right: c.right }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 0.6, y: 0 }}
+            transition={{ duration: 0.6, delay: c.delay + 1.8, ease: 'easeOut' }}
+          >
+            <svg width={28 * c.sz} height={16 * c.sz} viewBox="0 0 28 16" fill="none">
+              <path
+                d="M14 8 C10 4 4 2 0 4 C4 4 7 6 9 8 C6 7 3 8 1 10 C5 9 9 9 11 10 C12 11 13 12 14 12 C15 12 16 11 17 10 C19 9 23 9 27 10 C25 8 22 7 19 8 C21 6 24 4 28 4 C24 2 18 4 14 8Z"
+                fill="rgba(255,255,255,0.50)"
+              />
+            </svg>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── Grain (static) ── */}
+      <div className="grain-overlay" style={{ opacity: 0.055 }} aria-hidden="true" />
 
       {/* ══════════════════════════════════════
-          CONTENT (above scene, keeps readability)
+          CONTENT — scroll-exit animated
       ══════════════════════════════════════ */}
       <motion.div
         className="relative z-10 min-h-screen flex flex-col"
-        style={{ perspective: '900px', y: contentY, opacity: contentOpacity }}
+        style={{ y: contentY, opacity: contentOpacity, willChange: 'transform, opacity' }}
       >
-
-        {/* Nav spacer */}
         <div className="h-20" />
 
-        {/* Main grid */}
         <div className="flex-1 flex items-center w-full max-w-[1400px] mx-auto px-6 md:px-12">
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
 
-            {/* ── LEFT — glass card stack (closest layer) ── */}
+            {/* ── LEFT — glass card ── */}
             <motion.div
               className="flex flex-col gap-6"
-              style={{ x: fgX, y: fgY }}
-              initial={{ opacity: 0, x: -60, rotateY: -12 }}
-              animate={{ opacity: 1, x: 0,   rotateY: 0 }}
-              transition={{ duration: 1.4, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0, x: -48 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1.2, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
-
-              {/* Tiltable glass card */}
-              <TiltCard>
+              {/* Glass card — no backdrop-filter (perf) */}
+              <div className="hero-glass-card">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#1DBF73] animate-pulse" />
                   <span className="text-[10px] tracking-[0.22em] text-[#1DBF73] uppercase font-sans font-semibold">
@@ -335,14 +158,14 @@ export default function Hero() {
                   done by the same hand — with the<br />
                   precision of a craftsman?
                 </p>
-              </TiltCard>
+              </div>
 
               {/* CTAs */}
               <motion.div
                 className="flex items-center gap-3 flex-wrap"
-                initial={{ opacity: 0, y: 20, rotateX: 8 }}
-                animate={{ opacity: 1, y: 0,  rotateX: 0 }}
-                transition={{ duration: 0.9, delay: 1.3, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
               >
                 <button
                   id="hero-cta-work"
@@ -372,7 +195,7 @@ export default function Hero() {
                 className="flex flex-col gap-1.5"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 1.7 }}
+                transition={{ duration: 0.8, delay: 1.5 }}
               >
                 <span className="text-[9px] tracking-[0.22em] text-[#555] uppercase font-sans">Currently available</span>
                 <div className="flex items-center gap-2">
@@ -380,9 +203,9 @@ export default function Hero() {
                     <motion.div
                       key={label}
                       className="flex items-center border border-[rgba(255,255,255,0.12)] rounded px-2.5 py-1 bg-[rgba(0,0,0,0.45)]"
-                      initial={{ opacity: 0, y: 8 }}
+                      initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.8 + i * 0.08 }}
+                      transition={{ delay: 1.6 + i * 0.07 }}
                       whileHover={{ borderColor: 'rgba(29,191,115,0.4)', scale: 1.05 }}
                     >
                       <span className="text-[9px] font-sans text-[#888] tracking-wide">{label}</span>
@@ -392,17 +215,14 @@ export default function Hero() {
               </motion.div>
             </motion.div>
 
-            {/* ── RIGHT — giant ghost title (deeper layer) ── */}
-            <motion.div
-              className="flex flex-col justify-end items-end"
-              style={{ x: midX, y: midY }}
-            >
+            {/* ── RIGHT — giant title ── */}
+            <motion.div className="flex flex-col justify-end items-end">
               <div className="overflow-hidden">
                 <motion.h1
                   className="hero-giant-title"
-                  initial={{ y: '115%', rotateX: -14, opacity: 0 }}
-                  animate={{ y: '0%',   rotateX: 0,   opacity: 1 }}
-                  transition={{ duration: 1.2, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  initial={{ y: '110%', opacity: 0 }}
+                  animate={{ y: '0%',   opacity: 1 }}
+                  transition={{ duration: 1.1, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
                   aria-label="Aaron"
                 >
                   AARON
@@ -411,20 +231,19 @@ export default function Hero() {
               <div className="overflow-hidden">
                 <motion.p
                   className="hero-giant-subtitle"
-                  initial={{ y: '115%', rotateX: -14, opacity: 0 }}
-                  animate={{ y: '0%',   rotateX: 0,   opacity: 1 }}
-                  transition={{ duration: 1.2, delay: 0.62, ease: [0.22, 1, 0.36, 1] }}
+                  initial={{ y: '110%', opacity: 0 }}
+                  animate={{ y: '0%',   opacity: 1 }}
+                  transition={{ duration: 1.1, delay: 0.52, ease: [0.22, 1, 0.36, 1] }}
                 >
                   THOMAS
                 </motion.p>
               </div>
 
-              {/* Role tag */}
               <motion.div
                 className="flex items-center gap-3 mt-4"
-                initial={{ opacity: 0, x: 24 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.9, delay: 1.1 }}
+                transition={{ duration: 0.8, delay: 1.0 }}
               >
                 <div className="w-8 h-px bg-[rgba(255,255,255,0.18)]" />
                 <span className="text-[10px] tracking-[0.3em] text-[#888] uppercase font-sans">
@@ -439,11 +258,10 @@ export default function Hero() {
         {/* ── BOTTOM BAR ── */}
         <motion.div
           className="w-full max-w-[1400px] mx-auto px-6 md:px-12 pb-8 flex items-end justify-between"
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 2.0 }}
+          transition={{ duration: 0.8, delay: 1.9 }}
         >
-          {/* Social icons */}
           <div className="flex items-center gap-3">
             {[
               { label: 'Twitter',  href: '#', icon: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' },
@@ -466,7 +284,6 @@ export default function Hero() {
             ))}
           </div>
 
-          {/* Animated scroll cue */}
           <button
             onClick={() => scrollTo('work')}
             className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-[#555] uppercase font-sans hover:text-[#1DBF73] transition-colors duration-300"
@@ -484,18 +301,15 @@ export default function Hero() {
         </motion.div>
       </motion.div>
 
-      {/* ── VERTICAL LABEL (fixed to right edge) ── */}
+      {/* ── VERTICAL LABEL ── */}
       <motion.div
         className="absolute right-8 top-1/2 -translate-y-1/2 hidden md:flex flex-col items-center gap-3 pointer-events-none z-20"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, delay: 2.3 }}
+        transition={{ duration: 0.8, delay: 2.2 }}
         aria-hidden="true"
       >
-        <span
-          className="text-[8px] tracking-[0.3em] text-[#3a3a3a] uppercase"
-          style={{ writingMode: 'vertical-rl' }}
-        >
+        <span className="text-[8px] tracking-[0.3em] text-[#3a3a3a] uppercase" style={{ writingMode: 'vertical-rl' }}>
           PORTFOLIO · 2025
         </span>
         <motion.div
@@ -503,7 +317,7 @@ export default function Hero() {
           style={{ height: 80 }}
           initial={{ scaleY: 0 }}
           animate={{ scaleY: 1 }}
-          transition={{ duration: 1.1, delay: 2.5 }}
+          transition={{ duration: 1.0, delay: 2.4 }}
         />
       </motion.div>
 
@@ -516,4 +330,3 @@ export default function Hero() {
     </section>
   )
 }
-
