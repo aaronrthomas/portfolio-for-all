@@ -20,7 +20,7 @@ function ProjectCard({ project, index, onClick }: ProjectCardProps) {
       initial={{ opacity: 0, y: 50, clipPath: 'inset(0 0 100% 0)' }}
       animate={isInView ? { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)' } : {}}
       transition={{ duration: 0.85, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-      className="project-card group border-t border-[rgba(255,255,255,0.08)] pt-6 pb-8 cursor-pointer"
+      className="project-card group border-t border-[rgba(255,255,255,0.08)] pt-6 pb-10 cursor-pointer"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onClick(project)}
@@ -30,101 +30,115 @@ function ProjectCard({ project, index, onClick }: ProjectCardProps) {
       onKeyDown={(e) => e.key === 'Enter' && onClick(project)}
       aria-label={`View ${project.title} case study`}
     >
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-0">
-        {/* Left: Number + Meta */}
-        <div className="lg:w-[180px] shrink-0 flex flex-col justify-between">
-          <div>
-            <span className="font-sans text-[11px] text-[#A1A1A1] tracking-[0.2em] mb-3 block">
-              {project.number}
-            </span>
-            <motion.div
-              animate={{ x: hovered ? 4 : 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-            >
-              <h3 className="font-display text-2xl md:text-3xl font-bold text-[#F5F5F5] leading-tight">
-                {project.title}
-              </h3>
-            </motion.div>
-          </div>
-          <div className="mt-4 lg:mt-auto">
-            <span className="font-sans text-xs text-[#A1A1A1] tracking-widest">
-              {project.year}
-            </span>
-          </div>
+      {/* ── TOP META ROW ── */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <span className="font-sans text-[11px] text-[#3a3a3a] tracking-[0.25em]">
+            {project.number}
+          </span>
+          <span className="w-px h-3 bg-[rgba(255,255,255,0.1)]" />
+          <span className="font-sans text-[11px] text-[#555] tracking-[0.2em]">
+            {project.year}
+          </span>
         </div>
+        <span
+          className="font-sans text-[10px] tracking-[0.22em] uppercase font-medium"
+          style={{ color: project.accentColor }}
+        >
+          {project.category}
+        </span>
+      </div>
 
-        {/* Center: Visual */}
-        <div className="lg:flex-1 lg:mx-10 overflow-hidden rounded-lg h-48 sm:h-56 md:h-64 lg:h-48">
-          <div
-            className="w-full h-full project-card-image flex items-center justify-center relative overflow-hidden"
-            style={{ backgroundColor: project.bgColor }}
-          >
-            {/* Abstract visual */}
+      {/* ── IMAGE BLOCK (full-width, 16:9) ── */}
+      <div className="w-full overflow-hidden rounded-xl" style={{ aspectRatio: '16/9' }}>
+        <motion.div
+          className="w-full h-full project-card-image flex items-center justify-center relative overflow-hidden"
+          style={{ backgroundColor: project.bgColor }}
+          animate={{ scale: hovered ? 1.03 : 1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {project.coverImage ? (
+            /* Real cover image */
+            <img
+              src={project.coverImage}
+              alt={`${project.title} cover`}
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              draggable={false}
+            />
+          ) : (
+            /* Abstract visual fallback */
             <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
               <div
-                className="w-32 h-32 md:w-48 md:h-48 rounded-full opacity-20 blur-2xl"
+                className="w-48 h-48 md:w-72 md:h-72 rounded-full opacity-20 blur-3xl"
                 style={{ backgroundColor: project.accentColor }}
               />
               <div
-                className="absolute w-16 h-16 md:w-24 md:h-24 rounded-full opacity-40"
-                style={{ backgroundColor: project.accentColor, top: '20%', right: '25%' }}
+                className="absolute w-24 h-24 md:w-36 md:h-36 rounded-full opacity-35"
+                style={{ backgroundColor: project.accentColor, top: '18%', right: '22%' }}
               />
               <div
-                className="absolute w-8 h-8 md:w-12 md:h-12 border-2 rounded-full opacity-30"
-                style={{ borderColor: project.accentColor, bottom: '25%', left: '20%' }}
+                className="absolute w-10 h-10 md:w-16 md:h-16 border-2 rounded-full opacity-25"
+                style={{ borderColor: project.accentColor, bottom: '22%', left: '18%' }}
               />
+              {/* Project number watermark */}
+              <div className="relative z-10 font-display text-[6rem] md:text-[10rem] font-bold opacity-[0.06] select-none text-white leading-none">
+                {project.number}
+              </div>
             </div>
+          )}
 
-            {/* Project number overlay */}
-            <div className="relative z-10 font-display text-[5rem] md:text-[8rem] font-bold opacity-[0.07] select-none text-white leading-none">
-              {project.number}
-            </div>
-
-            {/* Hover overlay */}
-            <AnimatePresence>
-              {hovered && (
+          {/* Hover overlay */}
+          <AnimatePresence>
+            {hovered && (
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(0,0,0,0.25)' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
                 <motion.div
-                  className="absolute inset-0 flex items-center justify-center bg-[rgba(0,0,0,0.3)]"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  className="font-sans text-[10px] font-semibold tracking-[0.22em] uppercase px-5 py-2.5 rounded-full border backdrop-blur-sm"
+                  style={{ color: project.accentColor, borderColor: project.accentColor, backgroundColor: 'rgba(0,0,0,0.4)' }}
+                  initial={{ scale: 0.88, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.88, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
                 >
-                  <div
-                    className="font-sans text-[10px] font-semibold tracking-[0.2em] uppercase px-4 py-2 rounded-full border"
-                    style={{ color: project.accentColor, borderColor: project.accentColor }}
-                  >
-                    View Case Study
-                  </div>
+                  View Case Study
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
 
-        {/* Right: Description + Category + Arrow */}
-        <div className="lg:w-[280px] shrink-0 flex flex-col justify-between">
-          <div>
-            <span
-              className="font-sans text-[10px] tracking-[0.18em] uppercase mb-4 block"
-              style={{ color: project.accentColor }}
-            >
-              {project.category}
-            </span>
-            <p className="font-sans text-[#A1A1A1] text-sm leading-relaxed">
-              {project.description}
-            </p>
-          </div>
+      {/* ── BOTTOM ROW: Title left · Description + CTA right ── */}
+      <div className="mt-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-12">
+        {/* Title */}
+        <motion.h3
+          className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-[#F5F5F5] leading-tight tracking-[-0.01em] shrink-0"
+          animate={{ x: hovered ? 4 : 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+        >
+          {project.title}
+        </motion.h3>
 
+        {/* Description + CTA */}
+        <div className="flex flex-col gap-4 md:max-w-sm lg:max-w-md">
+          <p className="font-sans text-[#6a6a6a] text-sm md:text-base leading-relaxed">
+            {project.description}
+          </p>
           <motion.div
-            className="mt-6 flex items-center gap-2 font-sans text-sm font-medium"
-            animate={{ x: hovered ? 4 : 0 }}
-            transition={{ duration: 0.3 }}
+            className="flex items-center gap-2 font-sans text-sm font-medium w-fit"
+            animate={{ x: hovered ? 6 : 0 }}
+            transition={{ duration: 0.35 }}
             style={{ color: project.accentColor }}
           >
             <span>View Project</span>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 12L12 2M12 2H5M12 2V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <path d="M2 12L12 2M12 2H5M12 2V9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </motion.div>
         </div>
@@ -166,17 +180,18 @@ export default function SelectedWork({ onProjectClick }: SelectedWorkProps) {
               </span>
             </motion.div>
 
-            <div className="overflow-hidden">
-              <motion.h2
-                className="font-display text-[clamp(2.5rem,6vw,5.5rem)] font-bold text-[#F5F5F5] leading-[1.0] tracking-[-0.02em]"
-                style={{ y: titleY }}
-                initial={{ y: '100%' }}
-                animate={isInView ? { y: '0%' } : {}}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              >
-                Selected Work
-              </motion.h2>
-            </div>
+            <motion.div style={{ y: titleY }}>
+              <div className="overflow-hidden">
+                <motion.h2
+                  className="font-display text-[clamp(2.5rem,6vw,5.5rem)] font-bold text-[#F5F5F5] leading-[1.0] tracking-[-0.02em]"
+                  initial={{ y: '100%' }}
+                  animate={isInView ? { y: '0%' } : {}}
+                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  Selected Work
+                </motion.h2>
+              </div>
+            </motion.div>
           </div>
 
           <motion.p

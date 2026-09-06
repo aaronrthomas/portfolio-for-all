@@ -9,6 +9,8 @@ export interface Project {
   accentColor: string
   bgColor: string
   slug: string
+  coverImage?: string
+  screenshots?: string[]
   // Case study sections
   overview?: string
   problem?: string
@@ -23,6 +25,8 @@ export const projects: Project[] = [
     id: '01',
     number: '01',
     slug: 'canteen-app',
+    coverImage: '/canteen.png',
+    screenshots: ['/canteen-1.png', '/canteen-2.png', '/canteen-3.png', '/canteen-4.png'],
     title: 'Canteen App',
     category: 'UI/UX · Product Design',
     tags: ['UI/UX', 'Product Design', 'Mobile'],
@@ -47,6 +51,8 @@ export const projects: Project[] = [
     id: '02',
     number: '02',
     slug: 'crowd-management',
+    coverImage: '/crowd.png',
+    screenshots: ['/crowd-1.png', '/crowd-2.png', '/crowd-3.png', '/crowd-4.png'],
     title: 'Crowd Management',
     category: 'UX · Product Design · Development',
     tags: ['UX', 'Product Design', 'Development'],
@@ -70,6 +76,8 @@ export const projects: Project[] = [
     id: '03',
     number: '03',
     slug: 'emotional-intelligence',
+    coverImage: '/emotional.png',
+    screenshots: ['/emo-1.png', '/emo-2.png', '/emo-3.png', '/emo-4.png'],
     title: 'Emotional Intelligence',
     category: 'UI/UX · Research',
     tags: ['UI/UX', 'Research', 'Product'],
@@ -93,6 +101,8 @@ export const projects: Project[] = [
     id: '04',
     number: '04',
     slug: 'electronic-repair',
+    coverImage: '/ec.png',
+    screenshots: ['/ec-1.png', '/ec-2.png', '/ec-3.png', '/ec-4.png'],
     title: 'Electronic Repair',
     category: 'Product Design · Development',
     tags: ['Product Design', 'Development', 'Service Design'],

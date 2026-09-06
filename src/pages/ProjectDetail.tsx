@@ -52,24 +52,45 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
           className="w-full min-h-[50vh] md:min-h-[60vh] flex flex-col justify-end relative overflow-hidden"
           style={{ backgroundColor: project.bgColor }}
         >
-          {/* Abstract visual */}
-          <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-            <div
-              className="w-[500px] h-[500px] rounded-full opacity-20 blur-[100px]"
-              style={{ backgroundColor: project.accentColor }}
-            />
-            <div
-              className="absolute w-[200px] h-[200px] rounded-full opacity-30 blur-[40px]"
-              style={{ backgroundColor: project.accentColor, top: '15%', right: '20%' }}
-            />
-          </div>
-          {/* Oversized project number */}
-          <div
-            className="absolute inset-0 flex items-center justify-center font-display font-bold text-[15rem] md:text-[20rem] opacity-[0.06] select-none text-white leading-none pointer-events-none"
-            aria-hidden="true"
-          >
-            {project.number}
-          </div>
+          {project.coverImage ? (
+            /* Real cover image as banner background */
+            <>
+              <img
+                src={project.coverImage}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover object-center"
+                draggable={false}
+                aria-hidden="true"
+              />
+              {/* Dark gradient so text stays readable */}
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.75) 100%)' }}
+                aria-hidden="true"
+              />
+            </>
+          ) : (
+            /* Abstract visual fallback */
+            <>
+              <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                <div
+                  className="w-[500px] h-[500px] rounded-full opacity-20 blur-[100px]"
+                  style={{ backgroundColor: project.accentColor }}
+                />
+                <div
+                  className="absolute w-[200px] h-[200px] rounded-full opacity-30 blur-[40px]"
+                  style={{ backgroundColor: project.accentColor, top: '15%', right: '20%' }}
+                />
+              </div>
+              {/* Oversized project number */}
+              <div
+                className="absolute inset-0 flex items-center justify-center font-display font-bold text-[15rem] md:text-[20rem] opacity-[0.06] select-none text-white leading-none pointer-events-none"
+                aria-hidden="true"
+              >
+                {project.number}
+              </div>
+            </>
+          )}
 
           <div className="relative z-10 max-w-[1400px] mx-auto px-6 md:px-10 pb-12 pt-24 w-full">
             <motion.div
@@ -140,31 +161,57 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
                 </CaseSection>
               )}
 
-              {/* Visual placeholder */}
+              {/* Visuals */}
               <CaseSection title="Visuals" accentColor={project.accentColor}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[1, 2, 3, 4].map((n) => (
-                    <div
-                      key={n}
-                      className="aspect-video rounded-lg flex items-center justify-center relative overflow-hidden"
-                      style={{ backgroundColor: project.bgColor }}
-                    >
-                      <div
-                        className="absolute inset-0 opacity-20"
-                        style={{
-                          background: `radial-gradient(ellipse at ${n % 2 === 0 ? '70%' : '30%'} 50%, ${project.accentColor} 0%, transparent 70%)`,
-                        }}
-                        aria-hidden="true"
-                      />
-                      <span className="relative font-sans text-xs text-[#A1A1A1] tracking-widest uppercase">
-                        Screen {n} — Placeholder
-                      </span>
+                {project.screenshots && project.screenshots.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {project.screenshots.map((src, i) => (
+                      <div key={i} className="w-full overflow-hidden rounded-xl">
+                        <img
+                          src={src}
+                          alt={`${project.title} screen ${i + 1}`}
+                          className="w-full h-auto object-cover object-center transition-transform duration-500 hover:scale-[1.02]"
+                          draggable={false}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : project.coverImage ? (
+                  <div className="w-full overflow-hidden rounded-xl">
+                    <img
+                      src={project.coverImage}
+                      alt={`${project.title} cover`}
+                      className="w-full h-auto object-cover object-center"
+                      draggable={false}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[1, 2, 3, 4].map((n) => (
+                        <div
+                          key={n}
+                          className="aspect-video rounded-lg flex items-center justify-center relative overflow-hidden"
+                          style={{ backgroundColor: project.bgColor }}
+                        >
+                          <div
+                            className="absolute inset-0 opacity-20"
+                            style={{
+                              background: `radial-gradient(ellipse at ${n % 2 === 0 ? '70%' : '30%'} 50%, ${project.accentColor} 0%, transparent 70%)`,
+                            }}
+                            aria-hidden="true"
+                          />
+                          <span className="relative font-sans text-xs text-[#A1A1A1] tracking-widest uppercase">
+                            Screen {n} — Placeholder
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <p className="font-sans text-[10px] text-[#A1A1A1] tracking-wider mt-3">
-                  ↑ Replace these placeholders with actual project screens/mockups
-                </p>
+                    <p className="font-sans text-[10px] text-[#A1A1A1] tracking-wider mt-3">
+                      ↑ Replace these placeholders with actual project screens/mockups
+                    </p>
+                  </>
+                )}
               </CaseSection>
             </div>
 

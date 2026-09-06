@@ -58,28 +58,29 @@ export default function Contact() {
             <span className="font-sans text-[10px] font-medium tracking-[0.25em] text-[#1DBF73] uppercase">Let's Talk</span>
           </motion.div>
 
-          <div className="overflow-hidden mb-2">
-            <motion.h2
-              className="font-display text-[clamp(2.5rem,7vw,7rem)] font-bold text-[#F5F5F5] leading-[1.0] tracking-[-0.02em]"
-              style={{ y: headingY }}
-              initial={{ y: '100%' }}
-              animate={isInView ? { y: '0%' } : {}}
-              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            >
-              Have an idea
-            </motion.h2>
-          </div>
-          <div className="overflow-hidden mb-8">
-            <motion.h2
-              className="font-display text-[clamp(2.5rem,7vw,7rem)] font-bold italic font-medium text-[#A1A1A1] leading-[1.0] tracking-[-0.02em]"
-              style={{ y: headingY }}
-              initial={{ y: '100%' }}
-              animate={isInView ? { y: '0%' } : {}}
-              transition={{ duration: 0.9, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            >
-              worth building?
-            </motion.h2>
-          </div>
+          {/* Outer wrapper carries scroll parallax — inner overflow-hidden clips entrance slide */}
+          <motion.div style={{ y: headingY }}>
+            <div className="overflow-hidden mb-2">
+              <motion.h2
+                className="font-display text-[clamp(2.5rem,7vw,7rem)] font-bold text-[#F5F5F5] leading-[1.0] tracking-[-0.02em]"
+                initial={{ y: '100%' }}
+                animate={isInView ? { y: '0%' } : {}}
+                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              >
+                Have an idea
+              </motion.h2>
+            </div>
+            <div className="overflow-hidden mb-8">
+              <motion.h2
+                className="font-display text-[clamp(2.5rem,7vw,7rem)] font-bold italic font-medium text-[#A1A1A1] leading-[1.0] tracking-[-0.02em]"
+                initial={{ y: '100%' }}
+                animate={isInView ? { y: '0%' } : {}}
+                transition={{ duration: 0.9, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              >
+                worth building?
+              </motion.h2>
+            </div>
+          </motion.div>
 
           <motion.p
             className="font-sans text-[#A1A1A1] text-lg md:text-xl leading-relaxed mb-12"

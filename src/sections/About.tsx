@@ -46,21 +46,22 @@ export default function About() {
               about me —
             </motion.p>
 
-            <div className="overflow-hidden mb-6">
-              <motion.h2
-                className="font-display text-[clamp(2rem,5vw,4rem)] font-bold text-[#F5F5F5] leading-[1.1] tracking-[-0.02em]"
-                style={{ y: headingY }}
-                initial={{ y: '100%' }}
-                animate={isInView ? { y: '0%' } : {}}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              >
-                A designer who codes.
-                <br />
-                <span className="italic font-medium text-[#A1A1A1]">A developer who cares</span>
-                <br />
-                about design.
-              </motion.h2>
-            </div>
+            <motion.div style={{ y: headingY }}>
+              <div className="overflow-hidden mb-6">
+                <motion.h2
+                  className="font-display text-[clamp(2rem,5vw,4rem)] font-bold text-[#F5F5F5] leading-[1.1] tracking-[-0.02em]"
+                  initial={{ y: '100%' }}
+                  animate={isInView ? { y: '0%' } : {}}
+                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  A designer who codes.
+                  <br />
+                  <span className="italic font-medium text-[#A1A1A1]">A developer who cares</span>
+                  <br />
+                  about design.
+                </motion.h2>
+              </div>
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 30 }}
