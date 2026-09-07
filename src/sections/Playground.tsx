@@ -79,7 +79,9 @@ export default function Playground() {
                 key={item.id}
                 className="relative overflow-hidden rounded-lg break-inside-avoid cursor-default"
                 style={{
-                  height: isTall ? 280 : 200,
+                  ...(item.image || item.video
+                    ? { aspectRatio: item.imageAspectRatio ?? '1 / 1' }
+                    : { height: isTall ? 280 : 200 }),
                   background: bgGradients[item.id] || `radial-gradient(ellipse, ${item.accentColor} 0%, ${item.bgColor} 70%)`,
                 }}
                 initial={{ opacity: 0, scale: 0.92, y: 24 }}
@@ -89,13 +91,38 @@ export default function Playground() {
                 onMouseLeave={() => setHoveredId(null)}
                 data-cursor="explore"
               >
-                {/* Abstract visual element */}
-                <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                  <div
-                    className="w-20 h-20 rounded-full opacity-30 blur-xl"
-                    style={{ backgroundColor: item.accentColor }}
-                  />
-                </div>
+                {/* Visual element — video > image > abstract blob */}
+                {item.video ? (
+                  <div className="absolute inset-0" aria-hidden="true">
+                    <video
+                      src={item.video}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.55)] via-transparent to-transparent" />
+                  </div>
+                ) : item.image ? (
+                  <div className="absolute inset-0" aria-hidden="true">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover opacity-100"
+                      style={{ objectPosition: item.imagePosition ?? 'center' }}
+                    />
+                    {/* subtle dark vignette so text stays readable */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.55)] via-transparent to-transparent" />
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                    <div
+                      className="w-20 h-20 rounded-full opacity-30 blur-xl"
+                      style={{ backgroundColor: item.accentColor }}
+                    />
+                  </div>
+                )}
 
                 {/* Hover metadata overlay */}
                 <AnimatePresence>

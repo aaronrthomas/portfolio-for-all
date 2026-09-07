@@ -66,15 +66,17 @@ export interface PlaygroundItem {
   tool: string
   bgColor: string
   accentColor: string
+  image?: string
+  imagePosition?: string   // CSS object-position, default 'center'
+  imageAspectRatio?: string // CSS aspect-ratio override, e.g. '4/5'
+  video?: string           // path to a looping video asset
 }
 
 export const playgroundItems: PlaygroundItem[] = [
-  { id: 'p1', title: 'Abstract Form Study', category: '3D · Render', year: '2024', tool: 'Blender', bgColor: '#1a1a2e', accentColor: '#6366f1' },
-  { id: 'p2', title: 'Type Experiment I', category: 'Typography', year: '2024', tool: 'Figma', bgColor: '#1e1a2e', accentColor: '#8b5cf6' },
-  { id: 'p3', title: 'Generative Poster', category: 'AI · Visual', year: '2024', tool: 'AI tools', bgColor: '#0d1f17', accentColor: '#1DBF73' },
-  { id: 'p4', title: 'Motion Loop 01', category: 'Motion', year: '2023', tool: 'Framer Motion', bgColor: '#2d1a0e', accentColor: '#f59e0b' },
-  { id: 'p5', title: 'Brand System Sketch', category: 'Branding', year: '2024', tool: 'Figma', bgColor: '#2d0a0a', accentColor: '#ef4444' },
-  { id: 'p6', title: 'Liquid Material', category: '3D · Animation', year: '2024', tool: 'Blender', bgColor: '#0a1a2d', accentColor: '#3b82f6' },
-  { id: 'p7', title: 'Interface Fragment', category: 'Experimental UI', year: '2023', tool: 'Figma', bgColor: '#1a1a0d', accentColor: '#eab308' },
-  { id: 'p8', title: 'Spatial Composition', category: '3D · Render', year: '2024', tool: 'Spline', bgColor: '#1a0d2e', accentColor: '#a855f7' },
+  { id: 'p3', title: 'Generative Poster', category: 'AI · Visual', year: '2024', tool: 'AI tools', bgColor: '#0d1f17', accentColor: '#1DBF73', image: '/ai.jpg', imageAspectRatio: '1/1', imagePosition: 'center' },
+  { id: 'p4', title: 'Motion Loop 01', category: 'Motion', year: '2023', tool: 'Framer Motion', bgColor: '#2d1a0e', accentColor: '#f59e0b', video: '/video.mp4' },
+  { id: 'p5', title: 'Brand System Sketch', category: 'Branding', year: '2024', tool: 'Figma', bgColor: '#2d0a0a', accentColor: '#ef4444', image: '/brand.jpg', imageAspectRatio: '3/4', imagePosition: 'top' },
+  { id: 'p6', title: 'Liquid Material', category: '3D · Animation', year: '2024', tool: 'Blender', bgColor: '#0a1a2d', accentColor: '#3b82f6', image: '/liquid.jpg', imageAspectRatio: '1/1', imagePosition: 'center' },
+  { id: 'p7', title: 'Interface Fragment', category: 'Experimental UI', year: '2023', tool: 'Figma', bgColor: '#1a1a0d', accentColor: '#eab308', image: '/ui.png', imageAspectRatio: '3/4', imagePosition: 'top' },
+  { id: 'p8', title: 'Spatial Composition', category: '3D · Render', year: '2024', tool: 'Spline', bgColor: '#1a0d2e', accentColor: '#a855f7', image: '/space.jpg', imageAspectRatio: '3/4', imagePosition: 'top' },
 ]
