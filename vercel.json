@@ -1,7 +1,13 @@
 {
   "installCommand": "npm install && npm rebuild esbuild && chmod -R +x node_modules/.bin",
   "buildCommand": "npm run build",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/google2d3b6d6e435efc7d.html", "dest": "/google2d3b6d6e435efc7d.html" },
+    { "src": "/sitemap.xml",                 "dest": "/sitemap.xml"                 },
+    { "src": "/robots.txt",                  "dest": "/robots.txt"                  },
+    { "src": "/favicon.svg",                 "dest": "/favicon.svg"                 },
+    { "src": "/assets/(.*)",                 "dest": "/assets/$1"                   },
+    { "src": "/(.*\\.(js|css|png|jpg|jpeg|webp|svg|ico|mp4|woff|woff2|ttf|otf))", "dest": "/$1" },
+    { "src": "/(.*)",                        "dest": "/index.html"                  }
   ]
 }
