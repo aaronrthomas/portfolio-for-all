@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion'
 
 import LoadingScreen from './components/LoadingScreen'
@@ -18,6 +19,7 @@ import Philosophy from './sections/Philosophy'
 import Contact from './sections/Contact'
 
 import ProjectDetail from './pages/ProjectDetail'
+import { ProjectPage } from './pages/ProjectDetail'
 import type { Project } from './data/projects'
 import ScrollFade from './components/ScrollFade'
 
@@ -30,7 +32,9 @@ const quickNavSections = [
   { key: 'c', label: 'Contact', id: 'contact' },
 ]
 
-export default function App() {
+// ── Homepage — single-page scroll experience ──────────────────────────────────
+
+function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [quickNavOpen, setQuickNavOpen] = useState(false)
@@ -115,7 +119,7 @@ export default function App() {
 
       <Footer />
 
-      {/* Project detail overlay */}
+      {/* Project detail overlay (modal — keeps homepage UX intact) */}
       <AnimatePresence>
         {selectedProject && (
           <ProjectDetail
@@ -184,5 +188,42 @@ export default function App() {
         )}
       </AnimatePresence>
     </>
+  )
+}
+
+// ── Root App — Router wraps everything ───────────────────────────────────────
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      {/* Custom cursor runs at root level so it works on all routes */}
+      <CustomCursor />
+      <Routes>
+        {/* Homepage — full single-page scroll experience */}
+        <Route path="/" element={<HomePage />} />
+
+        {/* Project case study pages — individually crawlable by search engines */}
+        <Route path="/work/:slug" element={<ProjectPage />} />
+
+        {/* Catch-all 404 */}
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+              <div className="text-center">
+                <p className="font-display text-6xl font-bold text-[#1DBF73] mb-4">404</p>
+                <p className="font-sans text-[#A1A1A1] mb-8">This page doesn't exist.</p>
+                <a
+                  href="/"
+                  className="inline-flex items-center gap-2 bg-[#1DBF73] text-[#0A0A0A] font-sans font-semibold text-sm px-6 py-3 rounded-full hover:bg-[#17a862] transition-colors"
+                >
+                  ← Back to portfolio
+                </a>
+              </div>
+            </div>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   )
 }

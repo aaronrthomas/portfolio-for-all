@@ -61,9 +61,11 @@ function ProjectCard({ project, index, onClick }: ProjectCardProps) {
             /* Real cover image */
             <img
               src={project.coverImage}
-              alt={`${project.title} cover`}
+              alt={`${project.title} — ${project.category} project by Aaron R Thomas`}
               className="absolute inset-0 w-full h-full object-cover object-center"
               draggable={false}
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             /* Abstract visual fallback */
@@ -130,17 +132,29 @@ function ProjectCard({ project, index, onClick }: ProjectCardProps) {
           <p className="font-sans text-[#6a6a6a] text-sm md:text-base leading-relaxed">
             {project.description}
           </p>
-          <motion.div
-            className="flex items-center gap-2 font-sans text-sm font-medium w-fit"
-            animate={{ x: hovered ? 6 : 0 }}
-            transition={{ duration: 0.35 }}
-            style={{ color: project.accentColor }}
-          >
-            <span>View Project</span>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M2 12L12 2M12 2H5M12 2V9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </motion.div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <motion.div
+              className="flex items-center gap-2 font-sans text-sm font-medium w-fit"
+              animate={{ x: hovered ? 6 : 0 }}
+              transition={{ duration: 0.35 }}
+              style={{ color: project.accentColor }}
+            >
+              <span>View Project</span>
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                <path d="M2 12L12 2M12 2H5M12 2V9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </motion.div>
+            {/* SEO-discoverable anchor — hidden visually, accessible to crawlers */}
+            <a
+              href={`/work/${project.slug}`}
+              className="font-sans text-[10px] text-[#3a3a3a] hover:text-[#555] transition-colors"
+              tabIndex={-1}
+              onClick={(e) => { e.preventDefault(); onClick(project) }}
+              aria-label={`Open ${project.title} case study`}
+            >
+              Case study ↗
+            </a>
+          </div>
         </div>
       </div>
     </motion.div>

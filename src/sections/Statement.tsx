@@ -48,7 +48,7 @@ export default function Statement() {
             { text: 'not for people.', italic: false, delay: 0.14 },
           ].map(({ text, italic, delay }) => (
             <div key={text} className="overflow-hidden">
-              <motion.p
+              <motion.h2
                 className={`font-display text-[clamp(2.4rem,6.5vw,6rem)] font-bold leading-[1.1] tracking-[-0.02em] ${
                   italic ? 'italic font-medium text-[#A1A1A1]' : 'text-[#F5F5F5]'
                 }`}
@@ -57,7 +57,7 @@ export default function Statement() {
                 transition={{ duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] }}
               >
                 {text}
-              </motion.p>
+              </motion.h2>
             </div>
           ))}
         </motion.div>

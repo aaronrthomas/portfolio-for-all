@@ -68,24 +68,24 @@ export default function Philosophy() {
         {/* Manifesto — personal and direct */}
         <div className="mb-16 md:mb-20">
           <div className="philosophy-line">
-            <motion.p
+            <motion.h2
               className="font-display text-[clamp(2rem,6vw,6rem)] font-bold leading-[1.15] tracking-[-0.02em] text-[#F5F5F5]"
               initial={{ y: '100%' }}
               animate={isInView ? { y: '0%' } : {}}
               transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             >
               Unpopular opinions
-            </motion.p>
+            </motion.h2>
           </div>
           <div className="philosophy-line">
-            <motion.p
+            <motion.h2
               className="font-display text-[clamp(2rem,6vw,6rem)] italic font-medium leading-[1.15] tracking-[-0.02em] text-[#A1A1A1]"
               initial={{ y: '100%' }}
               animate={isInView ? { y: '0%' } : {}}
               transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
             >
               about design.
-            </motion.p>
+            </motion.h2>
           </div>
         </div>
 

@@ -83,7 +83,7 @@ export default function Hero() {
       >
         <img
           src="/hero-warrior.jpg"
-          alt=""
+          alt="Atmospheric dark background — Aaron R Thomas portfolio"
           className="w-full h-full object-cover object-center"
           draggable={false}
         />
@@ -223,7 +223,7 @@ export default function Hero() {
                   initial={{ y: '110%', opacity: 0 }}
                   animate={{ y: '0%',   opacity: 1 }}
                   transition={{ duration: 1.1, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  aria-label="Aaron"
+                  aria-label="Aaron R Thomas — Designer, Developer and Creative Technologist"
                 >
                   AARON
                 </motion.h1>

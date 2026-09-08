@@ -27,7 +27,7 @@ export default function About() {
       id="about"
       ref={ref}
       className="py-24 md:py-40 bg-[#111111] relative overflow-hidden"
-      aria-label="About Aaron"
+      aria-label="About Aaron R Thomas — Designer, Developer and Creative Technologist"
     >
       <div className="absolute top-0 left-0 right-0 h-px bg-[rgba(255,255,255,0.06)]" aria-hidden="true" />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-[rgba(255,255,255,0.06)]" aria-hidden="true" />

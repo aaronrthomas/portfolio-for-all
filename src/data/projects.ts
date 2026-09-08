@@ -18,6 +18,11 @@ export interface Project {
   process?: string[]
   tools?: string[]
   outcome?: string
+  // SEO fields
+  seoTitle?: string
+  metaDescription?: string
+  primaryKeyword?: string
+  secondaryKeywords?: string[]
 }
 
 export const projects: Project[] = [
@@ -46,6 +51,10 @@ export const projects: Project[] = [
     ],
     tools: ['Figma', 'FigJam', 'Protopie'],
     outcome: 'A complete design system and interactive prototype covering ordering, payment, real-time tracking and canteen-side management.',
+    seoTitle: 'Canteen App — Mobile UI/UX Case Study | Aaron R Thomas',
+    metaDescription: 'A mobile-first ordering platform designed to transform the college canteen experience — reducing queues and improving order accuracy. UI/UX case study by Aaron R Thomas.',
+    primaryKeyword: 'canteen app UI/UX design',
+    secondaryKeywords: ['mobile ordering app design', 'college canteen app', 'food ordering UX', 'mobile app case study'],
   },
   {
     id: '02',
@@ -71,6 +80,10 @@ export const projects: Project[] = [
     ],
     tools: ['Figma', 'FigJam', 'React', 'Tailwind CSS'],
     outcome: 'A dashboard prototype and design system for real-time crowd monitoring with alert flows and historical data views.',
+    seoTitle: 'Crowd Management Dashboard — UX Design Case Study | Aaron R Thomas',
+    metaDescription: 'Real-time crowd monitoring dashboard concept — a UX and product design case study exploring event safety, data visualisation, and actionable alert systems by Aaron R Thomas.',
+    primaryKeyword: 'crowd management dashboard UX design',
+    secondaryKeywords: ['event safety UI design', 'data visualisation dashboard', 'product design case study', 'React dashboard design'],
   },
   {
     id: '03',
@@ -96,6 +109,10 @@ export const projects: Project[] = [
     ],
     tools: ['Figma', 'Notion', 'FigJam'],
     outcome: 'A research report and concept prototype exploring emotional design patterns for future digital product work.',
+    seoTitle: 'Emotional Intelligence in Design — UX Research | Aaron R Thomas',
+    metaDescription: 'A research-led design exploration into emotionally aware digital interfaces. UX research and concept design case study by Aaron R Thomas.',
+    primaryKeyword: 'emotional design UX research',
+    secondaryKeywords: ['affective computing design', 'human-centred design', 'UX research case study', 'emotionally aware interface'],
   },
   {
     id: '04',
@@ -121,6 +138,10 @@ export const projects: Project[] = [
     ],
     tools: ['Figma', 'HTML', 'CSS', 'JavaScript'],
     outcome: 'A fully designed and partially built web platform with booking flows, technician profiles and repair status tracking.',
+    seoTitle: 'Electronic Repair Platform — Service & Product Design | Aaron R Thomas',
+    metaDescription: 'Service design and web platform connecting users with trusted electronics repair technicians. Product design and frontend development case study by Aaron R Thomas.',
+    primaryKeyword: 'electronics repair platform product design',
+    secondaryKeywords: ['service design case study', 'web platform UI/UX', 'HTML CSS JavaScript project', 'booking platform design'],
   },
   {
     id: '05',
@@ -146,6 +167,10 @@ export const projects: Project[] = [
     ],
     tools: ['Figma', 'React', 'Tailwind CSS', 'Vite'],
     outcome: 'A working web application with curated content categories, card-based browsing and collection saving functionality.',
+    seoTitle: 'Inspiration Station — Web Design & React Development | Aaron R Thomas',
+    metaDescription: 'A curated creative inspiration platform — designed and built with React and Tailwind CSS. Web design and frontend development case study by Aaron R Thomas.',
+    primaryKeyword: 'inspiration platform web design development',
+    secondaryKeywords: ['React web app design', 'creative platform frontend', 'Vite React Tailwind project', 'designer who codes'],
   },
   {
     id: '06',
@@ -171,5 +196,9 @@ export const projects: Project[] = [
     ],
     tools: ['Blender', 'Figma', 'Spline', 'Framer Motion', 'AI tools'],
     outcome: 'An evolving archive of creative work that informs all client and project work.',
+    seoTitle: 'Creative Experiments — 3D, Motion & Generative Design | Aaron R Thomas',
+    metaDescription: 'An ongoing collection of 3D renders, motion design, type explorations and AI-assisted creative work by Aaron R Thomas — creative technologist.',
+    primaryKeyword: 'creative technology experiments portfolio',
+    secondaryKeywords: ['3D design Blender portfolio', 'motion design Framer', 'generative AI design', 'creative technologist work', 'Spline 3D web'],
   },
 ]
