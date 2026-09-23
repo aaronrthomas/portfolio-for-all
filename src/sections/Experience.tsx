@@ -13,6 +13,7 @@ const typeLabels: Record<string, string> = {
   leadership: 'Leadership',
   internship: 'Internship',
   freelance: 'Freelance',
+  development: 'Development',
   'full-time': 'Full-time',
 }
 
