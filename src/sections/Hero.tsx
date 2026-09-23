@@ -39,15 +39,33 @@ export default function Hero() {
   const bgX = useSpring(rawBgX, { stiffness: 22, damping: 28 })
   const bgY = useSpring(rawBgY, { stiffness: 22, damping: 28 })
 
+  // ── Cursor mask reveal — overlay ref (no React state = no re-renders) ──
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const MASK_RADIUS = 180
+
   useEffect(() => {
     let rafId: number
+    let cx = -999, cy = -999        // current spring position
+    let tx = -999, ty = -999        // target (raw mouse)
+    const SPRING = 0.10             // lerp factor (0=stuck, 1=instant)
+
+    const tick = () => {
+      cx += (tx - cx) * SPRING
+      cy += (ty - cy) * SPRING
+      if (overlayRef.current) {
+        const mask = `radial-gradient(circle ${MASK_RADIUS}px at ${cx}px ${cy}px, transparent 0%, transparent 35%, black 75%)`
+        overlayRef.current.style.maskImage = mask
+        overlayRef.current.style.webkitMaskImage = mask
+      }
+      rafId = requestAnimationFrame(tick)
+    }
+    rafId = requestAnimationFrame(tick)
+
     const onMove = (e: MouseEvent) => {
-      // Throttle via rAF so we don't update on every pixel
-      cancelAnimationFrame(rafId)
-      rafId = requestAnimationFrame(() => {
-        mouseX.set(e.clientX / window.innerWidth)
-        mouseY.set(e.clientY / window.innerHeight)
-      })
+      tx = e.clientX
+      ty = e.clientY
+      mouseX.set(e.clientX / window.innerWidth)
+      mouseY.set(e.clientY / window.innerHeight)
     }
     window.addEventListener('mousemove', onMove, { passive: true })
     return () => {
@@ -75,7 +93,7 @@ export default function Hero() {
       aria-label="Hero section"
     >
 
-      {/* ── BACKGROUND — parallax layer (GPU composited) ── */}
+      {/* ── BACKGROUND — parallax layer: clean image, always fully visible ── */}
       <motion.div
         className="absolute inset-0 scale-[1.12]"
         style={{ x: bgX, y: bgY, willChange: 'transform' }}
@@ -87,17 +105,33 @@ export default function Hero() {
           className="w-full h-full object-cover object-center"
           draggable={false}
         />
-        {/* Colour grading */}
-        <div className="absolute inset-0"
-          style={{ background: 'linear-gradient(120deg, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.10) 55%, rgba(0,0,0,0.65) 100%)' }}
-        />
-        <div className="absolute inset-0"
-          style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.62) 0%, transparent 40%, rgba(0,0,0,0.90) 100%)' }}
-        />
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at 60% 40%, rgba(0,60,40,0.18) 0%, transparent 65%)' }}
-        />
       </motion.div>
+
+      {/* ── REVEAL LAYER — portrait photo, exposed through cursor mask hole ── */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <img
+          src="/hero-reveal.jpg"
+          alt=""
+          className="w-full h-full object-cover object-center"
+          draggable={false}
+        />
+      </div>
+
+      {/* ── DARK OVERLAY — section-level, no transform, mask punches cursor hole ── */}
+      <div
+        ref={overlayRef}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: [
+            'linear-gradient(120deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.88) 100%)',
+            'linear-gradient(to bottom, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.50) 40%, rgba(0,0,0,0.96) 100%)',
+          ].join(', '),
+          /* mask starts fully opaque — hole appears on first mouse move */
+          maskImage: 'radial-gradient(circle 0px at -999px -999px, transparent 0%, black 1%)',
+          WebkitMaskImage: 'radial-gradient(circle 0px at -999px -999px, transparent 0%, black 1%)',
+        }}
+        aria-hidden="true"
+      />
 
       {/* ── Diagonal slash ── */}
       <div className="absolute inset-0 pointer-events-none hero-slash" aria-hidden="true" />
