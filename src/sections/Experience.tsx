@@ -6,6 +6,7 @@ const typeStyles: Record<string, string> = {
   leadership: '#1DBF73',
   internship: '#6366f1',
   freelance: '#f59e0b',
+  development: '#ff0000ff',
   'full-time': '#3b82f6',
 }
 
